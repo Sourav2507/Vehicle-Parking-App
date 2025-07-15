@@ -1,0 +1,16 @@
+.search-input::placeholder {
+    color: #4e8397;
+    font-weight: 400;
+}
+.search-input {
+    color: #0e171b;
+}
+
+.badge {
+    font-size: 0.875rem;
+    border-radius: 50rem;
+}
+
+.card img {
+    object-fit: cover;
+}

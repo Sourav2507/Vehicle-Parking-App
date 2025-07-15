@@ -1,0 +1,47 @@
+/* help_and_support.css */
+
+/* General container styling (optional padding override) */
+.container {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+/* FAQ Accordion overrides */
+.accordion-button {
+  font-weight: 500;
+  color: #0e171b;
+  background-color: #f8fbfc;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #e7f0f3;
+  color: #0e171b;
+}
+
+.accordion-body {
+  font-size: 0.95rem;
+}
+
+/* Section headings */
+h4 {
+  color: #0e171b;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Paragraph styling under emergency support */
+.text-muted {
+  font-size: 0.95rem;
+}
+
+/* Button hover states */
+.btn-primary:hover {
+  background-color: #0c9cd1;
+  border-color: #0c9cd1;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #dce7ec;
+  color: #0e171b;
+  border-color: #c0d4db;
+}

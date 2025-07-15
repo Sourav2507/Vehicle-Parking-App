@@ -1,0 +1,76 @@
+/* style.css */
+
+/* Fonts */
+body {
+    font-family: 'Space Grotesk', 'Noto Sans', sans-serif;
+    background-color: #f8fbfc;
+    color: #0d141c;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5 {
+    letter-spacing: -0.015em;
+    font-weight: 700;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #0c77f2;
+    border-color: #0c77f2;
+}
+
+.btn-primary:hover {
+    background-color: #095dc1;
+    border-color: #095dc1;
+}
+
+.btn-outline-secondary {
+    background-color: #e7edf4;
+    color: #0d141c;
+    border: none;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #d1dce6;
+}
+
+/* Cards */
+.card {
+    border-color: #cedae8;
+    background-color: #f8fbfc;
+}
+
+/* Links */
+a {
+    color: #0d141c;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #0c77f2;
+    text-decoration: underline;
+}
+
+/* Footer */
+footer {
+    background-color: #f8fbfc;
+    color: #49709c;
+}
+
+/* Hero Section */
+.hero {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)),
+        url('/static/images/hero-bg.jpg'); /* replace with your image */
+    background-size: cover;
+    background-position: center;
+    color: white;
+    padding: 4rem 2rem;
+    text-align: center;
+    border-radius: 0.5rem;
+}
+
+/* Icons (optional if using Bootstrap Icons) */
+.icon {
+    color: #0d141c;
+    font-size: 24px;
+}

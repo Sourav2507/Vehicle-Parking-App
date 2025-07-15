@@ -1,0 +1,98 @@
+{% extends "customer.html" %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/customer_db.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div id="app" class="container py-4" v-cloak>
+  <div v-if="loading">Loading dashboard...</div>
+
+  <div v-else>
+    <!-- Profile Box with Expenditure on Right -->
+    <div class="section d-flex align-items-center justify-content-between flex-wrap mb-4">
+      <!-- Left: Profile Details -->
+      <div class="d-flex align-items-center gap-4 flex-grow-1">
+        <div class="profile-frame">
+          <img :src="user.profile_image || '/static/images/person.png'" alt="Profile" class="profile-img" />
+        </div>
+        <div>
+          <h3>Hello, ${ user.fname } !</h3>
+          <p><strong>Username:</strong> ${ user.username }</p>
+          <p><strong>Email:</strong> ${ user.email }</p>
+          <p><strong>Phone:</strong> ${ user.phone }</p>
+          <p><strong>Age:</strong> ${ user.age }</p>
+          <p><strong>Address:</strong> ${ user.address }</p>
+        </div>
+      </div>
+
+      <!-- Right: Total Expenditure -->
+      <div class="expenditure-box text-end mt-3 mt-md-0">
+        <h6>Total Expenditure</h6>
+        <h4 class="text-success">₹${ total_expenditure.toLocaleString() }</h4>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="section">
+          <h4 class="mb-3 text-center">Booking Status</h4>
+          <canvas id="bookingStatusChart"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="section">
+          <h4 class="mb-3 text-center">Payment Status</h4>
+          <canvas id="paymentStatusChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Bookings Chart -->
+    <div class="section mb-4">
+      <h4 class="mb-3 text-center">Monthly Bookings</h4>
+      <canvas id="monthlyBookingsChart"></canvas>
+    </div>
+
+    <!-- Bookings -->
+    <div class="section mb-4">
+      <h3>Recent Bookings</h3>
+      <ul v-if="bookings.length">
+        <li v-for="b in bookings">
+          ${ b.location } – Slot ${ b.slot } <br />
+          ${ b.start_time } to ${ b.end_time } (${ b.status })
+        </li>
+      </ul>
+      <p v-else>No recent bookings.</p>
+    </div>
+
+    <!-- Payments -->
+    <div class="section mb-4">
+      <h3>Recent Payments</h3>
+      <ul v-if="payments.length">
+        <li v-for="p in payments">
+          ₹${ p.amount } – Due ${ p.due_date } – ${ p.status }
+        </li>
+      </ul>
+      <p v-else>No recent payments.</p>
+    </div>
+
+    <!-- Notifications -->
+    <div class="section">
+      <h3>Notifications</h3>
+      <ul v-if="notifications.length">
+        <li v-for="n in notifications">
+          <strong>${ n.heading }</strong> – ${ n.message }
+          <em>(${ n.date })</em>
+        </li>
+      </ul>
+      <p v-else>No notifications.</p>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/customer_db.js') }}"></script>
+{% endblock %}

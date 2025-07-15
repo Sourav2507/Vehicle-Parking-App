@@ -1,0 +1,75 @@
+{% extends "customer.html" %}
+{% block title %}User Profile{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div id="profileApp" class="container py-5">
+  <div class="card shadow p-4 mx-auto" style="max-width: 960px;">
+
+    <!-- Profile Picture -->
+    <div class="text-center mb-4">
+      <label for="uploadInput">
+        <img v-bind:src="'/static/' + profileImage" alt="Profile Image"
+          class="img-fluid object-fit-contain rounded-circle profile-img"
+          style="height: 150px; width: 150px; object-fit: cover;">
+      </label>
+      <input type="file" id="uploadInput" style="display:none;" v-on:change="uploadImage">
+
+      <h4 class="mt-3 fw-bold">${ fname } ${ lname }</h4>
+      <p class="text-muted">${ role }</p>
+      <p class="text-secondary small">${ email }</p>
+    </div>
+
+
+
+    <!-- Read-only Info -->
+    <div v-if="!editMode" class="mb-4">
+      <p><strong>Phone Number:</strong> ${ phone }</p>
+      <p><strong>Age:</strong> ${ age }</p>
+      <p><strong>Gender:</strong> ${ gender }</p>
+      <p><strong>Car Reg. No:</strong> ${ reg_no }</p>
+      <p><strong>Address:</strong> ${ address }</p>
+    </div>
+
+    <!-- Edit Form -->
+    <form v-if="editMode" v-on:submit.prevent="saveChanges" class="mt-4">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <input type="text" v-model="fname" class="form-control" placeholder="First Name">
+        </div>
+        <div class="col-md-6">
+          <input type="text" v-model="lname" class="form-control" placeholder="Last Name">
+        </div>
+        <div class="col-md-6">
+          <input type="text" v-model="phone" class="form-control" placeholder="Phone Number">
+        </div>
+        <div class="col-md-6">
+          <input type="number" v-model="age" class="form-control" placeholder="Age">
+        </div>
+        <div class="col-md-6">
+          <input type="text" v-model="reg_no" class="form-control" placeholder="Car Reg. No">
+        </div>
+        <div class="col-md-6">
+          <input type="text" v-model="address" class="form-control" placeholder="Address">
+        </div>
+      </div>
+      <div class="mt-4 text-end">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+
+    <div class="text-center" v-if="!editMode">
+      <button class="btn btn-outline-primary" v-on:click="toggleEdit">Edit Details</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+{% endblock %}

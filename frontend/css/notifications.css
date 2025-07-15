@@ -1,0 +1,20 @@
+.notification-wrapper {
+  max-width: 960px;
+}
+
+.notification-card {
+  border: 1px solid #e0e0e0;
+  transition: box-shadow 0.2s ease;
+}
+
+.notification-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.notification-img {
+  width: 200px;
+  height: 120px;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}

@@ -1,0 +1,89 @@
+{% extends "customer.html" %}
+
+{% block title %}My Bookings - PARKSY{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/booking.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5" id="bookingApp">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <h2 class="fw-bold text-dark mb-3">My Bookings</h2>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <a class="nav-link fw-semibold"
+         :class="{ active: activeTab === 'upcoming', 'text-dark': activeTab === 'upcoming', 'text-muted': activeTab !== 'upcoming' }"
+         href="#" v-on:click.prevent="activeTab = 'upcoming'">Upcoming</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link fw-semibold"
+         :class="{ active: activeTab === 'past', 'text-dark': activeTab === 'past', 'text-muted': activeTab !== 'past' }"
+         href="#" v-on:click.prevent="activeTab = 'past'">Past</a>
+    </li>
+  </ul>
+
+  <!-- Table -->
+  <div class="table-responsive rounded shadow-sm" v-if="filteredBookings.length">
+    <table class="table table-bordered bg-white align-middle mb-0">
+      <thead class="table-light">
+        <tr class="text-center">
+          <th scope="col">Booking ID</th>
+          <th scope="col">Location</th>
+          <th scope="col">Date & Time</th>
+          <th scope="col">Status</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="text-center" v-for="booking in filteredBookings" :key="booking.id">
+          <td class="text-primary fw-semibold">#${ booking.id }</td>
+          <td>${ booking.location }</td>
+          <td>
+            ${ formatDate(booking.start_time) }<br>
+            – ${ formatTime(booking.end_time) }
+          </td>
+          <td>
+            <span class="badge bg-info text-dark px-3 py-2">${ booking.status }</span>
+          </td>
+          <td class="text-primary fw-semibold">
+
+            <!-- CONDITIONAL ACTIONS -->
+            <template v-if="booking.status === 'Requested'">
+              <a href="#" class="text-decoration-none" @click.prevent="cancelBooking(booking)">Cancel</a>
+            </template>
+
+            <template v-else-if="booking.status === 'Accepted'">
+              <a href="#" class="text-decoration-none me-2" @click.prevent="cancelBooking(booking)">Cancel</a> |
+              <a href="#" class="text-decoration-none ms-2" @click.prevent="payForBooking(booking)">Pay</a>
+            </template>
+
+            <template v-else-if="booking.status === 'Confirmed'">
+              <a href="#" class="text-decoration-none" @click.prevent="downloadReceipt(booking)">Download Receipt</a>
+            </template>
+
+            <template v-else>
+              <span class="text-muted">—</span>
+            </template>
+
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- No Bookings -->
+  <div v-else class="text-center text-muted mt-5">
+    <p>No ${ activeTab } bookings available.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/bookings.js') }}"></script>
+{% endblock %}

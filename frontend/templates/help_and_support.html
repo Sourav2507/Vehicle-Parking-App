@@ -1,0 +1,68 @@
+{% extends "customer.html" %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/help_and_support.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <!-- Header -->
+  <div class="mb-4">
+    <h1 class="display-5 fw-bold text-dark">Support & Help</h1>
+  </div>
+
+  <!-- FAQ Section -->
+  <h4 class="mb-3">Frequently Asked Questions</h4>
+  <div class="accordion" id="faqAccordion">
+    {% for question in [
+      "How do I book a parking spot?",
+      "What payment methods are accepted?",
+      "How can I cancel my reservation?"
+    ] %}
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="heading{{ loop.index }}">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+          data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+          {{ question }}
+        </button>
+      </h2>
+      <div id="collapse{{ loop.index }}" class="accordion-collapse collapse"
+        aria-labelledby="heading{{ loop.index }}" data-bs-parent="#faqAccordion">
+        <div class="accordion-body text-secondary">
+          This is a sample answer. You can update it dynamically if needed.
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Contact Us -->
+  <h4 class="mt-5 mb-3">Contact Us</h4>
+  <form>
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Your Name</label>
+        <input type="text" class="form-control" placeholder="Enter your name">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email Address</label>
+        <input type="email" class="form-control" placeholder="Enter your email">
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Message</label>
+      <textarea class="form-control" rows="4" placeholder="Describe your issue"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+
+  <!-- Emergency Support -->
+  <h4 class="mt-5 mb-3">Emergency Support</h4>
+  <p class="text-muted">For immediate assistance, please call our 24/7 hotline or start a live chat.</p>
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-secondary">Call Hotline</button>
+    <button class="btn btn-outline-secondary">Start Chat</button>
+  </div>
+</div>
+{% endblock %}

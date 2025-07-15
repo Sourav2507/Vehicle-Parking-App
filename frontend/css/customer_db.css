@@ -1,0 +1,46 @@
+.customer-db {
+  font-family: "Space Grotesk", "Noto Sans", sans-serif;
+  background-color: #f8fbfc;
+  color: #0e171b;
+}
+
+.profile-frame {
+  border: 4px solid #198754;
+  border-radius: 50%;
+  padding: 5px;
+  width: 150px;
+  height: 150px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.profile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.section {
+  background-color: #ffffff;
+  padding: 1.2rem 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-top: 2rem;
+}
+
+canvas {
+  background-color: #fff;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  width: 100% !important;
+  height: 300px !important;
+}
+
+.expenditure-box {
+  min-width: 180px;
+  padding: 0.5rem 1rem;
+  background-color: #ecf5ec;
+  border-left: 4px solid #198754;
+  border-radius: 0.5rem;
+}

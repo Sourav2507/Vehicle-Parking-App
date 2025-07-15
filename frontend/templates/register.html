@@ -1,0 +1,103 @@
+{% extends "index.html" %}
+{% block title %}Register{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="register-container" id="app">
+    <div class="register-left">
+        <!-- Logo -->
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Parksy Logo">
+        </div>
+
+        <!-- Registration Form -->
+        <form v-on:submit.prevent="handleRegister">
+            <h2>Welcome to PARKSY!</h2>
+            <p>Please fill in your details to create your account.</p>
+
+            <p v-if="errorMessage" class="error-message">${ errorMessage }</p>
+            <p v-if="successMessage" class="success-message">${ successMessage }</p>
+
+            <div class="form-columns">
+                <!-- Left Column -->
+                <div class="form-col">
+                    <div class="form_group">
+                        <label for="username">Username</label>
+                        <input v-model="form.username" required type="text" id="username">
+                    </div>
+                    <div class="form_group">
+                        <label for="password">Password</label>
+                        <input v-model="form.password" required type="password" id="password">
+                    </div>
+                    <div class="form_group">
+                        <label for="confirm_password">Confirm Password</label>
+                        <input v-model="form.confirm_password" required type="password" id="confirm_password">
+                    </div>
+                    <div class="form_group">
+                        <label for="fname">First Name</label>
+                        <input v-model="form.fname" required type="text" id="fname">
+                    </div>
+                    <div class="form_group">
+                        <label for="lname">Last Name</label>
+                        <input v-model="form.lname" required type="text" id="lname">
+                    </div>
+                    <div class="form_group">
+                        <label for="email">Email ID</label>
+                        <input v-model="form.email" required type="email" id="email">
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="form-col">
+                    <div class="form_group">
+                        <label for="ph_no">Phone Number</label>
+                        <input v-model="form.ph_no" type="number" id="ph_no">
+                    </div>
+                    <div class="form_group">
+                        <label for="age">Age</label>
+                        <input v-model="form.age" required type="number" id="age" min="18">
+                    </div>
+                    <div class="form_group">
+                        <label>Gender</label>
+                        <div class="gender_group">
+                            <label><input type="radio" value="Male" v-model="form.gender"> Male</label>
+                            <label><input type="radio" value="Female" v-model="form.gender"> Female</label>
+                            <label><input type="radio" value="Other" v-model="form.gender"> Other</label>
+                        </div>
+                    </div>
+                    <div class="form_group">
+                        <label for="reg_no">Car Reg. No.</label>
+                        <input v-model="form.reg_no" required type="text" id="reg_no">
+                    </div>
+                    <div class="form_group">
+                        <label for="city">City</label>
+                        <input v-model="form.city" required type="text" id="city">
+                    </div>
+                    <div class="form_group">
+                        <label for="state">State</label>
+                        <input v-model="form.state" required type="text" id="state">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit">Register</button>
+
+            <div class="switch-login">
+                <p>Already have an account? <a href="/login">Login</a></p>
+            </div>
+        </form>
+    </div>
+
+    <!-- Right Side Illustration -->
+    <div class="register-right">
+        <img src="{{ url_for('static', filename='images/register.png') }}" alt="Register Illustration">
+    </div>
+</div>
+
+<!-- Vue CDN -->
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script src="{{ url_for('static', filename='js/register.js') }}"></script>
+{% endblock %}

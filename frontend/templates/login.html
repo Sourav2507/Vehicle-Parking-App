@@ -1,0 +1,51 @@
+{% extends "index.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="login-container" id="app">
+    <!-- Left Side (Image) -->
+    <div class="login-left">
+        <img src="{{ url_for('static', filename='images/login.png') }}" alt="Login Illustration">
+    </div>
+
+    <!-- Right Side (Form) -->
+    <div class="login-right">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Parksy Logo">
+        </div>
+
+        <form v-on:submit.prevent="handleLogin">
+            <h2>Welcome Back to PARKSY!</h2>
+            <p>Please log in to continue exploring our community.</p>
+
+            <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+
+            <div class="form_group">
+                <label for="username">Username</label>
+                <input v-model="form.username" type="text" id="username" required>
+            </div>
+
+            <div class="form_group">
+                <label for="password">Password</label>
+                <input v-model="form.password" type="password" id="password" required>
+            </div>
+
+            <button type="submit">Login</button>
+
+            <div class="switch-register">
+                <p>Don't have an Account? <a href="/register">Register</a></p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Vue CDN -->
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<!-- Your logic -->
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,45 @@
+/* booking.css */
+
+/* Style tab underline on hover */
+.nav-tabs .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #4e8397;
+    transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #0e171b;
+    border-bottom: 3px solid #d0e0e7;
+}
+
+.nav-tabs .nav-link.active {
+    color: #0e171b;
+    border-bottom: 3px solid #18ace6;
+    background-color: transparent;
+}
+
+/* Make action links stand out */
+.table td a {
+    color: #18ace6;
+    font-weight: 600;
+}
+
+.table td a:hover {
+    text-decoration: underline;
+}
+
+/* Optional: Shadow effect for table wrapper */
+.table-responsive {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+    .table th,
+    .table td {
+        font-size: 14px;
+        padding: 10px;
+    }
+}

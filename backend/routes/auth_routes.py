@@ -1,84 +1,125 @@
-from flask import Blueprint, current_app as app,request,jsonify,render_template
-from flask_security import auth_required,verify_password,hash_password
+from flask import Blueprint, current_app as app, request, jsonify, render_template, session, redirect, url_for
+from werkzeug.security import generate_password_hash, check_password_hash
 from backend.models import *
 import uuid
 
 auth = Blueprint('auth', __name__)
 
-@auth.route("/")
+@auth.route('/')
 def home():
-    return render_template("index.html")
+    return render_template('landing.html')
 
-@auth.get("/protected")
-@auth_required()
-def protected():
-    return "This message is visible only to Authenticated User."
-
-@auth.post("/login")
+@auth.route('/login', methods=['GET', 'POST'])
 def login():
-    data = request.get_json()
+    if request.method == 'GET':
+        if 'username' in session:
+            if session['role'] == 'admin':
+                return redirect(url_for('admin.dashboard'))
+            else:
+                return redirect(url_for('user.dashboard'))
+        else:
+            return render_template("login.html")
 
-    email = data.get('email')
-    password = data.get('password')
+    elif request.method == 'POST':
+        data = request.get_json()
+        if not data:
+            return jsonify({"message": "No data received"}), 400
 
-    if not email or not password:
-        return jsonify({"message" : "Invalid Inputs"}),404
-    
-    datastore = app.security.datastore
-    
-    user = datastore.find_user(email=email)
-    if not user:
-        return jsonify({"message" : "User not found"}),404
-    
-    if verify_password(password,user.password):
-        return jsonify({"token" : user.get_auth_token(),
-                        "email" : user.email,
-                        "roles": [role.name for role in user.roles],
-                        "id" : user.id}), 200
-    return jsonify({"message" : "Invalid Password"}),404
+        username = data.get('username')
+        password = data.get('password')
 
-@auth.post("/register")
+        if not username or not password:
+            return jsonify({"message": "Username and password required"}), 400
+
+        user = User.query.filter_by(username=username).first()
+        if user:
+            if check_password_hash(user.password, password):
+                session.permanent = True
+                session['user_id']=user.id
+                session['role'] = user.role
+                session['username'] = user.username
+                session['email'] = user.email
+
+                # Correct route based on role
+                if user.role == 'admin':
+                    redirect_url = url_for('admin.dashboard')
+                else:
+                    redirect_url = url_for('user.dashboard')
+
+                return jsonify({
+                    "message": "Login successful",
+                    "redirect": redirect_url,
+                    "role": user.role
+                }), 200
+            else:
+                return jsonify({"message": "Wrong password"}), 401
+        else:
+            return jsonify({"message": "Username doesn't exist"}), 404
+
+
+
+@auth.route('/register', methods=['GET', 'POST'])
 def register():
-    data = request.get_json()
+    if request.method == 'GET':
+        if 'username' in session:
+            return redirect(url_for('auth.login'))
+        return render_template("register.html")
 
-    required_fields = ['username', 'email', 'password']
-    for field in required_fields:
-        if field not in data or not data[field]:
-            return jsonify({"error": f"{field} is required"}), 400
+    elif request.method == 'POST':
+        data = request.get_json()
+        if not data:
+            return jsonify({"message": "No data received"}), 400
 
-    # Check if user already exists
-    datastore = app.security.datastore
-    if datastore.find_user(email=data['email']):
-        return jsonify({"error": "User with this email already exists"}), 409
-    if User.query.filter_by(username=data['username']).first():
-        return jsonify({"error": "Username already taken"}), 409
+        username = data.get('username')
+        email = data.get('email')
 
-    try:
+        if User.query.filter_by(username=username).first():
+            return jsonify({"message": "Username already exists"}), 409
+
+        if User.query.filter_by(email=email).first():
+            return jsonify({"message": "Email already exists"}), 409
+
+        password = data.get('password')
+        confirm_password = data.get('confirm_password')
+
+        if not password or password != confirm_password:
+            return jsonify({"message": "Passwords do not match or are empty"}), 400
+
         # Create user
-        new_user = datastore.create_user(
-            username=data['username'],
-            email=data['email'],
-            password=hash_password(data['password']),
-            fs_uniquifier=str(uuid.uuid4()),
+        user = User(
+            username=username,
+            password=generate_password_hash(password),
             fname=data.get('fname'),
             lname=data.get('lname'),
+            email=email,
+            phone=data.get('ph_no'),
             age=data.get('age'),
             gender=data.get('gender'),
-            phone=data.get('phone'),
             reg_no=data.get('reg_no'),
-            address=data.get('address'),
-            profile_image=data.get('profile_image'),
-            roles=['user']
+            address=f"{data.get('city')}, {data.get('state')}",
+            role='user',
+            profile_image='images/person.png'
         )
 
+        db.session.add(user)
         db.session.commit()
+
+        # Login after register
+        session.permanent = True
+        session['user_id']=user.id
+        session['username'] = username
+        session['email'] = email
+        session['role'] = 'user'
+
         return jsonify({
-            "token": new_user.get_auth_token(),
-            "email": new_user.email,
-            "roles": [role.name for role in new_user.roles],
-            "id": new_user.id
+            "message": "Registration successful",
+            "redirect": url_for('user.dashboard')
         }), 200
 
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+
+
+@auth.route('/logout', methods=['GET'])
+def logout():
+    session.clear()
+    return redirect('/')
+

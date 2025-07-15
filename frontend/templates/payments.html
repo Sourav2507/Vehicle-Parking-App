@@ -1,0 +1,80 @@
+{% extends "customer.html" %}
+
+{% block title %}Payments - PARKSY{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/payments.css') }}">
+{% endblock %}
+
+{% block content %}
+<div id="paymentsApp" class="container py-5">
+  <div class="mx-auto" style="max-width: 960px;">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+      <h1 class="h3 fw-bold text-dark">Payments</h1>
+    </div>
+
+    <!-- Payment History Section -->
+    <h4 class="mb-3 px-2">Payment History</h4>
+    <div class="table-responsive mb-5 px-2">
+      <table class="table table-bordered bg-light">
+        <thead class="table-light">
+          <tr>
+            <th class="text-center">Method</th>
+            <th class="text-center">Amount</th>
+            <th class="text-center">Date</th>
+            <th class="text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="p in paymentHistory" :key="p.id">
+            <td class="text-center">—</td>
+            <td class="text-center">₹${ p.amount.toFixed(2) }</td>
+            <td class="text-center">${ p.due_date }</td>
+            <td class="text-center text-success fw-semibold">Paid</td>
+          </tr>
+          <tr v-if="!paymentHistory.length">
+            <td colspan="4" class="text-center text-muted">No payment history found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Unpaid Bookings Section -->
+    <h4 class="mb-3 px-2">Unpaid Bookings</h4>
+    <div class="table-responsive px-2">
+      <table class="table table-bordered bg-light">
+        <thead class="table-light">
+          <tr>
+            <th class="text-center">Booking ID</th>
+            <th class="text-center">Amount</th>
+            <th class="text-center">Due Date</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="u in unpaidBookings" :key="u.id">
+            <td class="text-center">#${ u.id }</td>
+            <td class="text-center">₹${ u.amount.toFixed(2) }</td>
+            <td class="text-center">${ u.due_date }</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-primary" @click="payNow(u.id)">Pay Now</button>
+            </td>
+          </tr>
+          <tr v-if="!unpaidBookings.length">
+            <td colspan="4" class="text-center text-muted">No unpaid bookings found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/payments.js') }}"></script>
+{% endblock %}
