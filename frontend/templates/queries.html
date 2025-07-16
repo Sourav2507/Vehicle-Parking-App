@@ -1,0 +1,59 @@
+{% extends "admin.html" %} {% block admin_head %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/queries.css') }}"
+/>
+{% endblock %} {% block admin_content %}
+<div class="container py-4" id="queries_app">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-dark">User Queries</h2>
+  </div>
+
+  <div v-if="loading" class="text-center my-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-3">Loading queries...</p>
+  </div>
+
+  <div v-else>
+    <div v-if="queries.length === 0" class="alert alert-info">
+      No queries found.
+    </div>
+
+    <div class="row g-4" v-else>
+      <div class="col-12" v-for="query in queries" :key="query.id">
+        <div class="card shadow-sm h-100 d-flex flex-column">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title">${ query.title }</h5>
+            <p class="text-muted mb-2 small">
+              Posted by: <strong>${ query.user_name }</strong> | On: ${
+              query.date_posted }
+            </p>
+            <p class="card-text mb-3 flex-grow-1">${ query.description }</p>
+
+            <label :for="'reply-' + query.id" class="form-label fw-semibold"
+              >Reply:</label
+            >
+            <textarea
+              :id="'reply-' + query.id"
+              v-model="query.replyText"
+              rows="3"
+              class="form-control mb-3"
+              placeholder="Write your reply..."
+            ></textarea>
+
+            <button
+              class="btn btn-primary mt-auto"
+              @click="sendReply(query)"
+              :disabled="!query.replyText.trim()"
+            >
+              Send Reply
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/queries.js') }}"></script>
+{% endblock %}

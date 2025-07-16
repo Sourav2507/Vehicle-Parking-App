@@ -1,0 +1,43 @@
+{% extends "index.html" %}
+
+{% block title %}Admin Panel | Parksy{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% block admin_head %}{% endblock %}
+{% endblock %}
+
+{% block body %}
+<div class="d-flex min-vh-100" style="font-family: 'Space Grotesk', 'Noto Sans', sans-serif;">
+
+  <!-- Sidebar (Vue controlled) -->
+  <div id="admin-navbar" class="bg-light border-end p-3" style="width: 280px;">
+    <div class="text-center mb-4">
+      <img :src="logo" alt="Parksy Logo" class="img-fluid" style="max-height: 60px;" />
+      <h4 class="mt-2 fw-bold">Admin Panel</h4>
+    </div>
+
+    <ul class="nav flex-column">
+      <li class="nav-item" v-for="link in navLinks" :key="link.label">
+        <a class="nav-link d-flex align-items-center gap-2" :href="link.url">
+          <i :class="link.iconClass"></i>
+          <span>${ link.label }</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Main Content (NOT Vue controlled) -->
+  <div class="flex-grow-1 p-4">
+    {% block admin_content %}{% endblock %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}

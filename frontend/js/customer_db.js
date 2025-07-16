@@ -10,14 +10,12 @@ new Vue({
     booking_status: {},
     payment_status: {},
     total_expenditure: 0,
-    monthly_bookings: []
+    monthly_bookings: [],
   },
   mounted() {
     fetch("/user/dashboard_data")
       .then((res) => res.json())
       .then((data) => {
-        if (!data || !data.user) throw new Error("User data missing");
-
         this.user = data.user;
         this.bookings = data.bookings || [];
         this.payments = data.payments || [];
@@ -25,12 +23,13 @@ new Vue({
         this.booking_status = data.booking_status || {};
         this.payment_status = data.payment_status || {};
         this.total_expenditure = data.total_expenditure || 0;
-        this.monthly_bookings = Array.isArray(data.monthly_bookings) && data.monthly_bookings.length === 12
-          ? data.monthly_bookings
-          : Array(12).fill(0); // fallback if null or not full year
+        this.monthly_bookings =
+          Array.isArray(data.monthly_bookings) &&
+          data.monthly_bookings.length === 12
+            ? data.monthly_bookings
+            : Array(12).fill(0);
 
         this.loading = false;
-
         this.$nextTick(() => {
           this.drawCharts();
         });
@@ -54,18 +53,22 @@ new Vue({
       this.drawPaymentChart();
       this.drawMonthlyBookingChart();
     },
-
     drawBookingChart() {
       const ctx = document.getElementById("bookingStatusChart");
       if (!ctx) return;
 
       const actualLabels = [
-        "Requested", "Accepted", "Confirmed",
-        "Occupied", "Cancelled", "Released"
+        "Requested",
+        "Accepted",
+        "Confirmed",
+        "Occupied",
+        "Cancelled",
+        "Rejected",
+        "Accomplished",
       ];
 
       const actualCounts = actualLabels.map(
-        label => this.booking_status[label] || 0
+        (label) => this.booking_status[label] || 0
       );
 
       const labels = ["", ...actualLabels, ""];
@@ -75,38 +78,40 @@ new Vue({
         type: "line",
         data: {
           labels,
-          datasets: [{
-            label: "Bookings",
-            data: counts,
-            borderColor: "#0d6efd",
-            backgroundColor: "#0d6efd44",
-            fill: true,
-            tension: 0,
-            pointRadius: 5,
-            pointHoverRadius: 7
-          }]
+          datasets: [
+            {
+              label: "Bookings",
+              data: counts,
+              borderColor: "#0d6efd",
+              backgroundColor: "#0d6efd44",
+              fill: true,
+              tension: 0,
+              pointRadius: 5,
+              pointHoverRadius: 7,
+            },
+          ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             title: { display: false },
-            legend: { display: false }
+            legend: { display: false },
           },
           scales: {
             x: {
               ticks: {
-                callback: (val, index) => labels[index] === "" ? "" : labels[index]
-              }
+                callback: (val, index) =>
+                  labels[index] === "" ? "" : labels[index],
+              },
             },
             y: {
-              beginAtZero: true
-            }
-          }
-        }
+              beginAtZero: true,
+            },
+          },
+        },
       });
     },
-
     drawPaymentChart() {
       const ctx = document.getElementById("paymentStatusChart");
       if (!ctx) return;
@@ -117,30 +122,46 @@ new Vue({
       new Chart(ctx, {
         type: "doughnut",
         data: {
-          labels: ["Unpaid", "Paid"],
-          datasets: [{
-            data: [unpaid, paid],
-            backgroundColor: ["#dc3545", "#198754"]
-          }]
+          labels: [
+            `Unpaid (₹${unpaid.toLocaleString()})`,
+            `Paid (₹${paid.toLocaleString()})`,
+          ],
+          datasets: [
+            {
+              data: [unpaid, paid],
+              backgroundColor: ["#dc3545", "#198754"],
+            },
+          ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             title: { display: false },
-            legend: { position: "bottom" }
-          }
-        }
+            legend: { position: "bottom" },
+          },
+        },
       });
     },
-
     drawMonthlyBookingChart() {
       const ctx = document.getElementById("monthlyBookingsChart");
       if (!ctx) return;
 
       const months = [
-        "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""
+        "",
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+        "",
       ];
 
       const counts = [null, ...this.monthly_bookings, null];
@@ -149,45 +170,55 @@ new Vue({
         type: "line",
         data: {
           labels: months,
-          datasets: [{
-            label: "Bookings",
-            data: counts,
-            fill: true,
-            backgroundColor: "rgba(13, 110, 253, 0.2)",
-            borderColor: "#0d6efd",
-            tension: 0,
-            pointRadius: 5,
-            pointHoverRadius: 7
-          }]
+          datasets: [
+            {
+              label: "Bookings",
+              data: counts,
+              fill: true,
+              backgroundColor: "rgba(13, 110, 253, 0.2)",
+              borderColor: "#0d6efd",
+              tension: 0,
+              pointRadius: 5,
+              pointHoverRadius: 7,
+            },
+          ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             title: { display: false },
-            legend: { display: false }
+            legend: { display: false },
           },
           scales: {
             x: {
               ticks: {
-                callback: (val, index) => months[index] === "" ? "" : months[index]
-              }
+                callback: (val, index) =>
+                  months[index] === "" ? "" : months[index],
+              },
             },
             y: {
-              beginAtZero: true
-            }
-          }
-        }
+              beginAtZero: true,
+            },
+          },
+        },
       });
-    }
+    },
+    statusClass(status) {
+      switch (status.toLowerCase()) {
+        case "rejected":
+          return "text-danger";
+        case "accomplished":
+          return "text-success";
+        case "cancelled":
+          return "text-muted";
+        case "requested":
+          return "text-primary";
+        case "occupied":
+          return "text-warning";
+        default:
+          return "text-secondary";
+      }
+    },
   },
-  computed: {
-  formattedExpenditure() {
-    return this.total_expenditure.toLocaleString('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0
-    });
-  }
-}
 });

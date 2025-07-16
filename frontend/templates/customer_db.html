@@ -11,9 +11,8 @@
   <div v-if="loading">Loading dashboard...</div>
 
   <div v-else>
-    <!-- Profile Box with Expenditure on Right -->
+    <!-- Profile Box -->
     <div class="section d-flex align-items-center justify-content-between flex-wrap mb-4">
-      <!-- Left: Profile Details -->
       <div class="d-flex align-items-center gap-4 flex-grow-1">
         <div class="profile-frame">
           <img :src="user.profile_image || '/static/images/person.png'" alt="Profile" class="profile-img" />
@@ -27,8 +26,6 @@
           <p><strong>Address:</strong> ${ user.address }</p>
         </div>
       </div>
-
-      <!-- Right: Total Expenditure -->
       <div class="expenditure-box text-end mt-3 mt-md-0">
         <h6>Total Expenditure</h6>
         <h4 class="text-success">₹${ total_expenditure.toLocaleString() }</h4>
@@ -62,8 +59,9 @@
       <h3>Recent Bookings</h3>
       <ul v-if="bookings.length">
         <li v-for="b in bookings">
-          ${ b.location } – Slot ${ b.slot } <br />
-          ${ b.start_time } to ${ b.end_time } (${ b.status })
+          ${ b.location } – Slot ${ b.slot }<br />
+          ${ b.start_time } to ${ b.end_time }
+          <span :class="statusClass(b.status)">(${ b.status })</span>
         </li>
       </ul>
       <p v-else>No recent bookings.</p>

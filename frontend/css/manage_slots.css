@@ -1,0 +1,21 @@
+/* manage_slots.css */
+
+#manage-slots-app h2 {
+  font-size: 2rem;
+  color: #101719;
+}
+
+#manage-slots-app table th {
+  color: #101719;
+  font-weight: 500;
+}
+
+#manage-slots-app table td {
+  color: #587f8d;
+  vertical-align: middle;
+}
+
+#manage-slots-app .form-check-input {
+  width: 1.2rem;
+  height: 1.2rem;
+}

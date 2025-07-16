@@ -40,7 +40,6 @@ def login():
                 session['username'] = user.username
                 session['email'] = user.email
 
-                # Correct route based on role
                 if user.role == 'admin':
                     redirect_url = url_for('admin.dashboard')
                 else:
@@ -85,7 +84,6 @@ def register():
         if not password or password != confirm_password:
             return jsonify({"message": "Passwords do not match or are empty"}), 400
 
-        # Create user
         user = User(
             username=username,
             password=generate_password_hash(password),
@@ -104,7 +102,6 @@ def register():
         db.session.add(user)
         db.session.commit()
 
-        # Login after register
         session.permanent = True
         session['user_id']=user.id
         session['username'] = username

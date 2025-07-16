@@ -11,6 +11,7 @@ class ParkingLot(db.Model):
     occupied = db.Column(db.Integer, default=0)
     date_of_registration = db.Column(db.Date, default=datetime.utcnow)
     price = db.Column(db.Integer, nullable=False)
+    active = db.Column(db.Boolean,default=True)
 
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     owner = db.relationship('User', backref='parking_lots')
@@ -60,6 +61,7 @@ class User(db.Model):
     phone = db.Column(db.String(10))
     reg_no = db.Column(db.String(15))
     address = db.Column(db.String(20))
+    active = db.Column(db.Boolean,default=True)
     profile_image = db.Column(db.String(200), default='images/person.png')
     role = db.Column(db.String(10), nullable=False, default='user')
 
@@ -67,9 +69,15 @@ class User(db.Model):
 class Payments(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     customer_id = db.Column(db.Integer, nullable=False)
+    booking_id = db.Column(db.Integer, db.ForeignKey('booking.id'), nullable=False)
     due_date = db.Column(db.Date, nullable=False)
     amount = db.Column(db.Integer, nullable=False)
     status = db.Column(db.String(7), default='unpaid')
+    payment_date = db.Column(db.Date, nullable=True)
+    payment_by = db.Column(db.String, default='Self')
+
+    booking = db.relationship("Booking", backref="payment")
+
 
 
 class Notification(db.Model):
@@ -95,3 +103,10 @@ class ActivityLog(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     action = db.Column(db.String(100))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Query(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    title = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    date_posted = db.Column(db.DateTime, default=datetime.utcnow)

@@ -1,0 +1,16 @@
+.nav-link {
+  font-weight: 500;
+  color: #212529;
+  text-decoration: none; /* remove underline by default */
+  transition: background-color 0.2s ease;
+}
+
+.nav-link:hover {
+  background-color: #f1f1f1;
+  border-radius: 5px;
+  text-decoration: none !important; /* remove underline on hover */
+}
+
+.nav-link i {
+  font-size: 1.2rem;
+}

@@ -1,0 +1,19 @@
+/* manage_users.css */
+
+#manage-users-app h2 {
+  font-size: 2rem;
+  color: #101719;
+}
+
+#manage-users-app .table th {
+  color: #0d181b;
+  font-weight: 500;
+}
+
+#manage-users-app .table td {
+  vertical-align: middle;
+}
+
+#manage-users-app .btn svg {
+  margin-top: -2px;
+}

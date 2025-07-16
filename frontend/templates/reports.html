@@ -1,0 +1,123 @@
+{% extends "admin.html" %}
+
+{% block admin_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+{% endblock %}
+
+{% block admin_content %}
+<div class="container py-4" id="admin-reports-app">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-dark">Reports</h2>
+  </div>
+
+  <!-- Graphs Row -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card p-3">
+        <canvas id="bookingsOverTimeChart"></canvas>
+        <p class="card-text fw-medium mt-3">Bookings Over Time</p>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card p-3">
+        <canvas id="bookingsBySlotChart"></canvas>
+        <p class="card-text fw-medium mt-3">Bookings by Slot</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics Table -->
+  <div class="card mb-4">
+    <div class="card-body table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th>Bookings</th>
+            <th>Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in data %}
+          <tr>
+            <td>{{ entry.date }}</td>
+            <td class="text-muted">{{ entry.bookings }}</td>
+            <td class="text-muted">${{ entry.revenue }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pie Charts Row -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card p-3">
+        <canvas id="statusDistributionChart"></canvas>
+        <p class="card-text fw-medium mt-3">Booking Status Distribution</p>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card p-3">
+        <canvas id="revenueStatusChart"></canvas>
+        <p class="card-text fw-medium mt-3">Revenue Breakdown</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revenue Tables Row -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card p-3">
+        <p class="card-text fw-medium">Revenue by Product</p>
+        <table class="table table-bordered mt-2">
+          <thead class="table-light">
+            <tr>
+              <th>Parking Name</th>
+              <th>Capacity</th>
+              <th>Price/Hour</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Lot A</td><td>40</td><td>$2.5</td></tr>
+            <tr><td>Lot B</td><td>30</td><td>$3.0</td></tr>
+            <tr><td>Garage C</td><td>60</td><td>$2.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card p-3">
+        <p class="card-text fw-medium">Top Earning Locations</p>
+        <table class="table table-bordered mt-2">
+          <thead class="table-light">
+            <tr>
+              <th>Region</th>
+              <th>Total Bookings</th>
+              <th>Total Revenue</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Downtown</td><td>120</td><td>$4200</td></tr>
+            <tr><td>City Center</td><td>90</td><td>$3750</td></tr>
+            <tr><td>Uptown</td><td>60</td><td>$2800</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Final Chart: Annual Revenue -->
+  <div class="card p-3 mb-4">
+    <canvas id="annualRevenueChart"></canvas>
+    <p class="card-text fw-medium mt-3">Annual Revenue Distribution</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+{% endblock %}

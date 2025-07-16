@@ -1,0 +1,19 @@
+[v-cloak] {
+  display: none;
+}
+
+.card-body h5 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.card-body p {
+  font-size: 0.95rem;
+  color: #6c757d;
+}
+
+/* Make canvas responsive */
+canvas {
+  width: 100% !important;
+  height: 300px !important;
+}

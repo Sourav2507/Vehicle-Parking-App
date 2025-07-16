@@ -1,0 +1,68 @@
+/* Container spacing */
+#admin-reports-app {
+  font-family: 'Space Grotesk', 'Noto Sans', sans-serif;
+  color: #101719;
+}
+
+/* Headings */
+#admin-reports-app h2 {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+/* Card image styling */
+#admin-reports-app .card-img-top {
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Paragraphs inside cards */
+#admin-reports-app .card-body p {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #101719;
+  margin-bottom: 0;
+}
+
+/* Table customizations */
+#admin-reports-app table th {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #101719;
+}
+
+#admin-reports-app table td {
+  font-size: 0.9rem;
+  color: #587f8d;
+}
+
+/* Rounded tables */
+#admin-reports-app .table {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* Optional: Adjust spacing between cards */
+#admin-reports-app .card {
+  border: 1px solid #d3dfe4;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-radius: 0.75rem;
+}
+
+/* Add padding to card body */
+#admin-reports-app .card-body {
+  padding: 1rem 1.25rem;
+}
+
+/* For responsive spacing */
+@media (max-width: 768px) {
+  #admin-reports-app .card-body p {
+    font-size: 0.95rem;
+  }
+
+  #admin-reports-app h2 {
+    font-size: 1.5rem;
+  }
+}

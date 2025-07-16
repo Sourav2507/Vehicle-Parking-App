@@ -22,7 +22,7 @@ new Vue({
         });
     },
     payNow(paymentId) {
-      if (!confirm("Are you sure you want to mark this payment as paid?")) return;
+      if (!confirm("Proceed to mark this booking as paid?")) return;
 
       fetch(`/user/pay/${paymentId}`, {
         method: "POST"
@@ -31,7 +31,7 @@ new Vue({
         .then(data => {
           if (data.success) {
             alert("Payment successful!");
-            this.fetchPayments(); // Refresh table
+            this.fetchPayments();
           } else {
             alert("Payment failed: " + (data.message || ""));
           }

@@ -1,0 +1,117 @@
+{% extends "admin.html" %} {% block admin_head %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin_bookings.css') }}"
+/>
+{% endblock %} {% block admin_content %}
+<div class="container py-4" id="admin-bookings-app">
+  <!-- Header -->
+  <div class="mb-4">
+    <h2 class="fw-bold text-dark">Bookings</h2>
+    <p class="text-muted mb-3">Manage and view bookings by status</p>
+
+    <!-- Toggle buttons for each booking status -->
+    <div class="d-flex flex-wrap gap-3 mb-3">
+      <div
+        v-for="status in allStatuses"
+        :key="status"
+        class="form-check form-check-inline"
+      >
+        <input
+          class="form-check-input"
+          type="checkbox"
+          :id="status"
+          :value="status"
+          v-model="visibleStatuses"
+        />
+        <label class="form-check-label" :for="status">${ status }</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tables by Status -->
+  <div
+    v-for="status in allStatuses"
+    :key="status"
+    v-show="visibleStatuses.includes(status)"
+  >
+    <h5 class="text-dark mt-4">
+      <i :class="statusIcons[status]" class="me-2"></i> ${ status } Bookings
+    </h5>
+
+    <div class="table-responsive" v-if="groupedBookings[status]?.length">
+      <table class="table table-bordered align-middle bg-light">
+        <thead class="table-light">
+          <tr>
+            <th>User Email</th>
+            <th>Parking Lot</th>
+            <th>Slot</th>
+            <th>Available Slots</th>
+            <th>Price/hr</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="booking in groupedBookings[status]" :key="booking.id">
+            <td class="text-muted">${ booking.email }</td>
+            <td>${ booking.parking_lot }</td>
+            <td>${ booking.slot }</td>
+            <td>${ booking.available_slots }</td>
+            <td>₹${ booking.price_per_hour }</td>
+            <td class="text-muted">${ booking.start_time }</td>
+            <td class="text-muted">${ booking.end_time }</td>
+
+            <!-- Actions: Only show for certain statuses -->
+            <td
+              v-if="['Requested', 'Accepted', 'Confirmed'].includes(booking.status)"
+              class="text-center d-flex justify-content-center gap-2 flex-wrap"
+            >
+              <!-- Accept -->
+              <button
+                v-if="booking.status === 'Requested'"
+                class="btn btn-sm btn-success"
+                @click="acceptBooking(booking)"
+                title="Accept Booking"
+              >
+                <i class="bi bi-check-circle-fill"></i>
+              </button>
+              
+              <!-- Confirm -->
+              <button
+                v-if="booking.status === 'Accepted'"
+                class="btn btn-sm btn-secondary"
+                @click="confirmBooking(booking)"
+                title="Confirm & Mark Paid"
+              >
+                <i class="bi bi-cash-coin"></i>
+              </button>
+
+              <!-- Reject -->
+              <button
+                v-if="['Requested', 'Accepted'].includes(booking.status)"
+                class="btn btn-sm btn-danger"
+                @click="rejectBooking(booking)"
+                title="Reject Booking"
+              >
+                <i class="bi bi-x-circle-fill"></i>
+              </button>
+
+            </td>
+
+            <!-- Placeholder dash for others -->
+            <td v-else class="text-center text-muted">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div v-else class="alert alert-info">
+      No ${ status.toLowerCase() } bookings found.
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/admin_bookings.js') }}"></script>
+{% endblock %}

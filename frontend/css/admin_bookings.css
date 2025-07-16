@@ -1,0 +1,20 @@
+#admin-bookings-app h2 {
+  font-size: 2rem;
+}
+
+#admin-bookings-app .input-group input::placeholder {
+  color: #6c757d;
+}
+
+#admin-bookings-app table th {
+  font-weight: 600;
+  color: #101719;
+}
+
+#admin-bookings-app table td {
+  font-size: 0.95rem;
+}
+
+#admin-bookings-app .badge {
+  font-size: 0.85rem;
+}
