@@ -1,7 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-
-db = SQLAlchemy()
+from backend.config.extensions import db
 
 class ParkingLot(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

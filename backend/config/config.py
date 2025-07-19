@@ -13,5 +13,12 @@ class LocalDevelopmentConfig(Config):
     WTF_CSRF_ENABLED = False
 
     CACHE_TYPE = "RedisCache"
-    CACHE_DEFAULT_TIMEOUT = 300
+    CACHE_DEFAULT_TIMEOUT = 30
     CACHE_REDIS_PORT = 6379
+
+    CELERY = dict(
+        broker_url="redis://localhost:6379/0",
+        result_backend="redis://localhost:6379/1",
+        task_ignore_result=False,
+        timezone = 'Asia/Kolkata'
+    )

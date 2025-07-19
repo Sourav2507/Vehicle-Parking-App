@@ -2,6 +2,7 @@ from flask import Blueprint,render_template,redirect,url_for,session,jsonify,req
 from werkzeug.utils import secure_filename
 import os
 from sqlalchemy import func,extract
+from backend.config.extensions import db,cache
 from backend.models import *
 from datetime import datetime, time
 from pytz import timezone
@@ -17,6 +18,7 @@ def dashboard():
     if ("username" in session):
         user = User.query.filter_by(username=session['username']).first()
         return render_template('customer_db.html')
+    return render_template("notfound.html")
 
 @user.route('/user/dashboard_data')
 def dashboard_data():
@@ -130,6 +132,7 @@ def dashboard_data():
 def find_parking():
     if ("username" in session):
         return render_template('find_parking.html')
+    return render_template("notfound.html")
 
 @user.route('/user/find_parking_data')
 def find_parking_data():
@@ -166,8 +169,6 @@ def find_parking_data():
             })
 
         return jsonify(result)
-
-
 
 @user.route('/user/book_spot', methods=['POST'])
 def book_spot():
@@ -268,6 +269,7 @@ def cancel_booking():
 def bookings():
     if ("username" in session):
         return render_template('bookings.html')
+    return render_template("notfound.html")
 
 @user.route('/user/my_bookings')
 def my_bookings():
@@ -399,6 +401,7 @@ def release_spot(booking_id):
 def payments():
     if ("username" in session):
         return render_template('payments.html')
+    return render_template("notfound.html")
 
 @user.route("/user/pay/<int:payment_id>", methods=["POST"])
 def mark_payment_paid(payment_id):
@@ -478,6 +481,7 @@ def user_payments_data():
 def help_and_support():
     if ("username" in session):
         return render_template('help_and_support.html')
+    return render_template("notfound.html")
 
 @user.post('/user/post_query')
 def post_query():
@@ -506,6 +510,7 @@ def post_query():
 def notifications():
     if ("username" in session):
         return render_template('notifications.html')
+    return render_template("notfound.html")
 
 @user.route('/user/notifications/data')
 def get_user_notifications():
@@ -531,6 +536,7 @@ def get_user_notifications():
 def profile():
     if ("username" in session):
         return render_template('profile.html')
+    return render_template("notfound.html")
 
 @user.route("/user/data", methods=["GET", "POST"])
 def handle_user_data():

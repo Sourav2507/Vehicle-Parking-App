@@ -1,5 +1,6 @@
 from flask import Blueprint, session, redirect, url_for, render_template, jsonify, request
 from backend.models import *
+from backend.config.extensions import db,cache
 from sqlalchemy import func, extract
 from datetime import datetime
 
@@ -9,6 +10,7 @@ admin = Blueprint('admin', __name__)
 def dashboard():
     if ("username" in session) and (session['role'] == 'admin'):
         return render_template("admin_db.html")
+    return render_template("notfound.html")
 
 @admin.route("/admin/dashboard_data")
 def dashboard_data():
@@ -70,45 +72,52 @@ def dashboard_data():
             "revenue_status": revenue_status
         })
 
-
-
-@admin.get("/admin/manage-slots")
-def manage_slots():
+@admin.get("/admin/manage-lots")
+def manage_lots():
     if ("username" in session) and (session['role'] == 'admin'):
-        return render_template("manage_slots.html")
+        return render_template("manage_lots.html")
+    return render_template("notfound.html")
 
-@admin.route("/admin/manage-slots/data")
-def get_slots_data():
+@admin.route("/admin/manage-lots/data")
+def get_lots_data():
     if ("username" in session) and (session['role'] == 'admin'):
-        slots = ParkingLot.query.order_by(ParkingLot.id).all()
-        slots_data = []
-        for s in slots:
-            slots_data.append({
-                "id": s.id,
-                "name": s.name,
-                "address": s.address,
-                "capacity": s.capacity,
-                "occupied": s.occupied,
-                "price": s.price,
-                "active": s.active,
+        lots = ParkingLot.query.order_by(ParkingLot.id).all()
+        lots_data = []
+        for lot in lots:
+            lots_data.append({
+                "id": lot.id,
+                "name": lot.name,
+                "address": lot.address,
+                "capacity": lot.capacity,
+                "occupied": lot.occupied,
+                "price": lot.price,
+                "active": lot.active,
             })
-        return jsonify(slots_data)
+        return jsonify(lots_data)
 
-@admin.route("/admin/manage-slots/toggle-active/<int:slot_id>", methods=["POST"])
-def toggle_slot_active(slot_id):
+@admin.route("/admin/manage-lots/toggle-active/<int:lot_id>", methods=["POST"])
+def toggle_lot_active(lot_id):
     if ("username" in session) and (session['role'] == 'admin'):
-        slot = ParkingLot.query.get_or_404(slot_id)
+        lot = ParkingLot.query.get_or_404(lot_id)
         data = request.get_json()
         new_status = data.get("active")
+
         if new_status is None:
             return jsonify(success=False, error="Missing active status"), 400
+        
+        if not new_status and lot.occupied > 0:
+            return jsonify(
+                success=False,
+                error=f"Cannot mark Lot #{lot.id} as unavailable. {lot.occupied} spot(s) still occupied."
+            ), 400
 
-        slot.active = bool(new_status)
+        lot.active = bool(new_status)
         db.session.commit()
-        return jsonify(success=True, active=slot.active)
+        return jsonify(success=True, active=lot.active)
 
-@admin.route("/admin/manage-slots/add", methods=["POST"])
-def add_slot():
+
+@admin.route("/admin/manage-lots/add", methods=["POST"])
+def add_lot():
     if ("username" in session) and (session['role'] == 'admin'):
         data = request.get_json()
         name = data.get("name", "").strip()
@@ -125,7 +134,7 @@ def add_slot():
         except ValueError:
             return jsonify(success=False, error="Capacity and price must be numbers"), 400
 
-        new_slot = ParkingLot(
+        new_lot = ParkingLot(
             name=name,
             address=address,
             capacity=capacity,
@@ -134,14 +143,41 @@ def add_slot():
             active=True,
             owner_id=1
         )
-        db.session.add(new_slot)
+        db.session.add(new_lot)
         db.session.commit()
-        return jsonify(success=True, slot_id=new_slot.id)
+        return jsonify(success=True, lot_id=new_lot.id)
+
+@admin.route('/admin/manage-lots/bookings/<int:lot_id>', methods=['GET'])
+def get_lot_bookings(lot_id):
+    lot = ParkingLot.query.get(lot_id)
+    if not lot:
+        return jsonify({'success': False, 'error': 'Parking lot not found'}), 404
+
+    bookings = Booking.query.filter_by(parking_lot_id=lot_id).all()
+
+    bookings_data = []
+    for b in bookings:
+        user = b.user
+        bookings_data.append({
+            'booking_id': b.id,
+            'customer_name': f"{user.fname} {user.lname}" if user else "N/A",
+            'car_reg_no': user.reg_no if user else "N/A",
+            'slot_id': b.slot_id,
+            'status': b.status,
+            'start_time': b.start_time.strftime("%Y-%m-%d %H:%M"),
+            'end_time': b.end_time.strftime("%Y-%m-%d %H:%M")
+        })
+
+    return jsonify({'success': True, 'bookings': bookings_data})
+
+
+
 
 @admin.get("/admin/manage-users")
 def manage_users():
     if ("username" in session) and (session['role'] == 'admin'):
         return render_template("manage_users.html")
+    return render_template("notfound.html")
 
 @admin.route("/admin/users_data")
 def get_users_data():
@@ -181,6 +217,7 @@ def toggle_user_active(user_id):
 def bookings():
     if ("username" in session) and (session['role'] == 'admin'):
         return render_template("admin_bookings.html")
+    return render_template("notfound.html")
 
 @admin.route('/admin/bookings_data')
 def bookings_data():
@@ -320,7 +357,7 @@ def confirm_booking(booking_id):
 def reports():
     if ("username" in session) and (session['role'] == 'admin'):
         return render_template("reports.html")
-
+    return render_template("notfound.html")
 
 
 
@@ -331,6 +368,7 @@ def reports():
 def queries_page():
     if ("username" in session) and (session['role'] == 'admin'):
         return render_template("queries.html")
+    return render_template("notfound.html")
 
 @admin.route("/admin/queries_data")
 def get_queries():

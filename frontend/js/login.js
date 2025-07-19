@@ -1,12 +1,12 @@
 const app = new Vue({
-  el: '#app',
-  delimiters: ['${', '}'],
+  el: "#app",
+  delimiters: ["${", "}"],  // <-- Required because you're using ${ } in HTML
   data: {
     form: {
-      username: '',
-      password: ''
+      username: "",
+      password: "",
     },
-    errorMessage: ''
+    errorMessage: "",
   },
   methods: {
     handleLogin: function () {
@@ -17,29 +17,27 @@ const app = new Vue({
 
       this.errorMessage = "";
 
-      fetch('/login', {
-        method: 'POST',
+      fetch("/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(this.form)
+        body: JSON.stringify(this.form),
       })
-        .then(response => {
-          if (response.ok) {
-            return response.json();
-          } else {
-            return response.json().then(data => {
-              throw new Error(data.message || "Invalid login.");
-            });
-          }
-        })
-        .then(data => {
+        .then((response) =>
+          response.json().then((data) => {
+            if (!response.ok) {
+              throw new Error(data.message || "Login failed.");
+            }
+            return data;
+          })
+        )
+        .then((data) => {
           window.location.href = data.redirect;
         })
-        .catch(error => {
-          console.error("Error:", error);
+        .catch((error) => {
           this.errorMessage = error.message;
         });
-    }
-  }
+    },
+  },
 });

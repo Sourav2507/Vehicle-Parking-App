@@ -121,3 +121,13 @@ button[type="submit"]:hover {
     text-decoration: none;
     font-weight: bold;
 }
+.error {
+  background-color: #ffe0e0; /* light red */
+  color: #b30000; /* dark red text */
+  padding: 10px 15px;
+  border: 1px solid #ff9999;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  font-weight: 500;
+}
+

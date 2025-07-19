@@ -23,7 +23,8 @@
             <h2>Welcome Back to PARKSY!</h2>
             <p>Please log in to continue exploring our community.</p>
 
-            <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+            <!-- FIX: Use Vue delimiters here -->
+            <p v-if="errorMessage" class="error">${ errorMessage }</p>
 
             <div class="form_group">
                 <label for="username">Username</label>

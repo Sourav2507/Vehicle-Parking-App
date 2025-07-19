@@ -1,11 +1,9 @@
-{% extends "customer.html" %}
-
-{% block head %}
-{{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/help_and_support.css') }}">
-{% endblock %}
-
-{% block content %}
+{% extends "customer.html" %} {% block head %} {{ super() }}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/help_and_support.css') }}"
+/>
+{% endblock %} {% block content %}
 <div class="container my-5" id="support-app">
   <!-- Header -->
   <div class="mb-4">
@@ -15,26 +13,89 @@
   <!-- FAQ Section -->
   <h4 class="mb-3">Frequently Asked Questions</h4>
   <div class="accordion" id="faqAccordion">
-    {% for question in [
-      "How do I book a parking spot?",
-      "What payment methods are accepted?",
-      "How can I cancel my reservation?"
-    ] %}
+    <!-- FAQ 1 -->
     <div class="accordion-item">
-      <h2 class="accordion-header" id="heading{{ loop.index }}">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-          data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
-          {{ question }}
+      <h2 class="accordion-header" id="heading1">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapse1"
+          aria-expanded="false"
+          aria-controls="collapse1"
+        >
+          How do I book a parking spot?
         </button>
       </h2>
-      <div id="collapse{{ loop.index }}" class="accordion-collapse collapse"
-        aria-labelledby="heading{{ loop.index }}" data-bs-parent="#faqAccordion">
+      <div
+        id="collapse1"
+        class="accordion-collapse collapse"
+        aria-labelledby="heading1"
+        data-bs-parent="#faqAccordion"
+      >
         <div class="accordion-body text-secondary">
-          This is a sample answer. You can update it dynamically if needed.
+          To book a parking spot, log in to your user dashboard, go to the "Book
+          Parking" section, and select a parking lot. The system will
+          automatically allocate the first available parking spot for you.
         </div>
       </div>
     </div>
-    {% endfor %}
+
+    <!-- FAQ 2 -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="heading2">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapse2"
+          aria-expanded="false"
+          aria-controls="collapse2"
+        >
+          Can I change my parking lot after booking?
+        </button>
+      </h2>
+      <div
+        id="collapse2"
+        class="accordion-collapse collapse"
+        aria-labelledby="heading2"
+        data-bs-parent="#faqAccordion"
+      >
+        <div class="accordion-body text-secondary">
+          No, once a parking spot has been allocated within a lot, you cannot
+          change the lot manually. However, you can release your current spot
+          from the dashboard and rebook in a different lot if available.
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ 3 -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="heading3">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapse3"
+          aria-expanded="false"
+          aria-controls="collapse3"
+        >
+          How can I cancel my reservation?
+        </button>
+      </h2>
+      <div
+        id="collapse3"
+        class="accordion-collapse collapse"
+        aria-labelledby="heading3"
+        data-bs-parent="#faqAccordion"
+      >
+        <div class="accordion-body text-secondary">
+          You can cancel your reservation by releasing your parking spot from
+          the dashboard. Once you release it, the status will change to
+          "Available" and timestamps will be recorded.
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Contact Us -->
@@ -42,58 +103,73 @@
   <form v-on:submit.prevent="submitQuery">
     <div class="mb-3">
       <label class="form-label">Query Title</label>
-      <input type="text" class="form-control" v-model="title" placeholder="Enter your query title">
+      <input
+        type="text"
+        class="form-control"
+        v-model="title"
+        placeholder="Enter your query title"
+      />
     </div>
     <div class="mb-3">
       <label class="form-label">Query Description</label>
-      <textarea class="form-control" rows="4" v-model="description" placeholder="Describe your issue"></textarea>
+      <textarea
+        class="form-control"
+        rows="4"
+        v-model="description"
+        placeholder="Describe your issue"
+      ></textarea>
     </div>
     <button type="submit" class="btn btn-primary">Post Query</button>
   </form>
 
   <!-- Emergency Support -->
   <h4 class="mt-5 mb-3">Emergency Support</h4>
-  <p class="text-muted">For immediate assistance, please call our 24/7 hotline or start a live chat.</p>
+  <p class="text-muted">
+    For immediate assistance, please call our 24/7 hotline or start a live chat.
+  </p>
   <div class="d-flex gap-2">
-    <button class="btn btn-outline-secondary" @click="alertFeature">Call Hotline</button>
-    <button class="btn btn-outline-secondary" @click="alertFeature">Start Chat</button>
+    <button class="btn btn-outline-secondary" @click="alertFeature">
+      Call Hotline
+    </button>
+    <button class="btn btn-outline-secondary" @click="alertFeature">
+      Start Chat
+    </button>
   </div>
 </div>
 
 <script>
   new Vue({
-    el: '#support-app',
-    delimiters: ['${', '}'],
+    el: "#support-app",
+    delimiters: ["${", "}"],
     data: {
-      title: '',
-      description: ''
+      title: "",
+      description: "",
     },
     methods: {
       submitQuery() {
-        fetch('/user/post_query', {
-          method: 'POST',
+        fetch("/user/post_query", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             title: this.title,
-            description: this.description
-          })
-        })
-        .then(response => {
+            description: this.description,
+          }),
+        }).then((response) => {
           if (response.ok) {
-            alert('Query submitted successfully.');
-            this.title = '';
-            this.description = '';
+            alert("Query submitted successfully.");
+            this.title = "";
+            this.description = "";
           } else {
-            alert('Something went wrong!');
+            alert("Something went wrong!");
           }
         });
       },
       alertFeature() {
-        alert('This feature is under development.');
-      }
-    }
+        alert("This feature is under development.");
+      },
+    },
   });
 </script>
 {% endblock %}
