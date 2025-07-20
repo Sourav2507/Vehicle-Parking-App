@@ -168,3 +168,18 @@ def get_celery_result():
         return jsonify({"status": "completed", "result": result.result})
     else:
         return jsonify({"status": "pending"}), 202
+
+
+@auth.route("/test-email")
+def test_email():
+    from flask_mail import Message
+    from backend.config.extensions import mail
+
+    msg = Message(
+        subject="Test Email",
+        sender="developersouravdebnath@gmail.com",
+        recipients=["souravdebnath9838@gmail.com"],
+        body="This is a test email"
+    )
+    mail.send(msg)
+    return "Email sent!"

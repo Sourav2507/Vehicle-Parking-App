@@ -1,7 +1,7 @@
 from flask import Flask,render_template
 from backend.config.config import LocalDevelopmentConfig
 from backend.config.create_initial_data import setup_initial_data
-from backend.config.extensions import db,cache
+from backend.config.extensions import db,cache,mail
 from backend.celery.celery_setup import celery_init_app
 from backend.routes.auth_routes import auth as auth_bp
 from backend.routes.user_routes import user as user_bp
@@ -21,6 +21,7 @@ def createApp():
     # Initialize SQLAlchemy
     db.init_app(app)
     cache.init_app(app)
+    mail.init_app(app)
 
     # Push app context for initial DB setup
     with app.app_context():
