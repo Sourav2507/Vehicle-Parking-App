@@ -2,6 +2,7 @@ from flask import Blueprint, session, redirect, url_for, render_template, jsonif
 from backend.models import *
 from backend.config.extensions import db,cache
 from sqlalchemy import func, extract
+from backend.celery.tasks import expire_booking_if_unpaid
 from datetime import datetime
 
 admin = Blueprint('admin', __name__)
@@ -296,11 +297,16 @@ def accept_booking(booking_id):
             customer_id=booking.customer_id,
             role="user",
             heading="Booking Accepted",
-            message=f"Your booking for {lot.name} has been accepted. Amount due: ₹{amount}."
+            message=f"Your booking for {lot.name} has been accepted. Amount due: ₹{amount}.Please pay it within 6 hours to confirm your Booking."
         )
         db.session.add(notif)
 
         db.session.commit()
+
+        expire_booking_if_unpaid.apply_async(
+        args=[booking.id, payment.id],
+        countdown=6*60*60
+        )
         return jsonify({"success": True})
 
 

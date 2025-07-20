@@ -13,7 +13,7 @@ new Vue({
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
-            this.notifications = data.notifications.reverse(); // 🔁 Reversed here
+            this.notifications = data.notifications;
           } else {
             console.error(data.message || "Failed to load notifications.");
           }

@@ -468,6 +468,15 @@ def user_payments_data():
                     "payment_by": p.payment_by,
                     "status": "paid"
                 })
+            elif p.status == "expired":
+                paid.append({
+                    "id": p.id,
+                    "parking_lot": lot.name,
+                    "amount": p.amount,
+                    "payment_date": "-",
+                    "payment_by": None,
+                    "status": "expired"
+                })
             elif p.status == "unpaid":
                 due_time = datetime.combine(p.due_date, time(12))
 
@@ -524,7 +533,10 @@ def get_user_notifications():
         if not user_id:
             return jsonify({"success": False, "message": "Unauthorized"}), 401
 
-        notifications = Notification.query.filter_by(customer_id=user_id).order_by(Notification.date_sent.desc()).all()
+        notifications = (Notification.query
+            .filter_by(customer_id=user_id)
+            .order_by(Notification.date_sent.desc(), Notification.id.desc())
+            .all())
 
         result = [
             {

@@ -1,9 +1,8 @@
 from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
-    "send-hello-email-daily-6am": {
-        "task": "backend.celery.tasks.send_hello_email",
-        "schedule": crontab(minute=6, hour=4),  # every day at 6:00 AM
-        "args": ["souravdebnath9838@gmail.com"]
+    "send_daily_reminder": {
+        "task": "backend.celery.tasks.send_daily_reminder",
+        "schedule": crontab(hour=10, minute=0)  # Runs daily at 6:06 AM IST/server time
     }
 }
