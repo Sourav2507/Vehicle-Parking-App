@@ -20,6 +20,7 @@ def dashboard():
         return render_template('customer_db.html')
     return render_template("notfound.html")
 
+@cache.cached(timeout=5)
 @user.route('/user/dashboard_data')
 def dashboard_data():
     if ("username" in session):
@@ -134,6 +135,7 @@ def find_parking():
         return render_template('find_parking.html')
     return render_template("notfound.html")
 
+@cache.cached(timeout=5)
 @user.route('/user/find_parking_data')
 def find_parking_data():
     if ("username" in session):
@@ -271,6 +273,7 @@ def bookings():
         return render_template('bookings.html')
     return render_template("notfound.html")
 
+@cache.cached(timeout=5)
 @user.route('/user/my_bookings')
 def my_bookings():
     if ("username" in session):
@@ -435,6 +438,7 @@ def mark_payment_paid(payment_id):
         db.session.commit()
         return jsonify({"success": True})
 
+@cache.cached(timeout=5)
 @user.route("/user/payments-data")
 def user_payments_data():
     if ("username" in session):
@@ -512,6 +516,7 @@ def notifications():
         return render_template('notifications.html')
     return render_template("notfound.html")
 
+@cache.cached(timeout=5)
 @user.route('/user/notifications/data')
 def get_user_notifications():
     if ("username" in session):
@@ -538,6 +543,7 @@ def profile():
         return render_template('profile.html')
     return render_template("notfound.html")
 
+@cache.cached(timeout=5)
 @user.route("/user/data", methods=["GET", "POST"])
 def handle_user_data():
     if ("username" in session):

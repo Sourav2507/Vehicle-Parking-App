@@ -12,6 +12,7 @@ def dashboard():
         return render_template("admin_db.html")
     return render_template("notfound.html")
 
+@cache.cached(timeout=5)
 @admin.route("/admin/dashboard_data")
 def dashboard_data():
     if ("username" in session) and (session['role'] == 'admin'):
@@ -78,6 +79,7 @@ def manage_lots():
         return render_template("manage_lots.html")
     return render_template("notfound.html")
 
+@cache.cached(timeout=5)
 @admin.route("/admin/manage-lots/data")
 def get_lots_data():
     if ("username" in session) and (session['role'] == 'admin'):
@@ -147,6 +149,7 @@ def add_lot():
         db.session.commit()
         return jsonify(success=True, lot_id=new_lot.id)
 
+@cache.cached(timeout=5)
 @admin.route('/admin/manage-lots/bookings/<int:lot_id>', methods=['GET'])
 def get_lot_bookings(lot_id):
     lot = ParkingLot.query.get(lot_id)
@@ -179,6 +182,7 @@ def manage_users():
         return render_template("manage_users.html")
     return render_template("notfound.html")
 
+@cache.cached(timeout=5)
 @admin.route("/admin/users_data")
 def get_users_data():
     if ("username" in session) and (session['role'] == 'admin'):
@@ -219,6 +223,7 @@ def bookings():
         return render_template("admin_bookings.html")
     return render_template("notfound.html")
 
+@cache.cached(timeout=5)
 @admin.route('/admin/bookings_data')
 def bookings_data():
     if ("username" in session) and (session['role'] == 'admin'):
@@ -370,6 +375,7 @@ def queries_page():
         return render_template("queries.html")
     return render_template("notfound.html")
 
+@cache.cached(timeout=5)
 @admin.route("/admin/queries_data")
 def get_queries():
     if ("username" in session) and (session['role'] == 'admin'):
