@@ -1,9 +1,10 @@
-from flask import Blueprint, session, redirect, url_for, render_template, jsonify, request
+from flask import Blueprint, session, redirect, url_for, render_template, jsonify, request,current_app,send_file
 from backend.models import *
 from backend.config.extensions import db,cache
-from sqlalchemy import func, extract
-from backend.celery.tasks import expire_booking_if_unpaid
+from sqlalchemy import func, extract,case, desc
+from backend.celery.tasks import expire_booking_if_unpaid,notify_users_new_parking_lot,generate_report_pdf
 from datetime import datetime
+import os
 
 admin = Blueprint('admin', __name__)
 
@@ -148,6 +149,10 @@ def add_lot():
         )
         db.session.add(new_lot)
         db.session.commit()
+
+        # Trigger Celery task in background
+        notify_users_new_parking_lot.delay(new_lot.id)
+
         return jsonify(success=True, lot_id=new_lot.id)
 
 @cache.cached(timeout=5)
@@ -309,7 +314,6 @@ def accept_booking(booking_id):
         )
         return jsonify({"success": True})
 
-
 @admin.route('/admin/reject_booking/<int:booking_id>', methods=['POST'])
 def reject_booking(booking_id):
     if ("username" in session) and (session['role'] == 'admin'):
@@ -370,10 +374,193 @@ def reports():
         return render_template("reports.html")
     return render_template("notfound.html")
 
+@cache.cached(timeout=5)
+@admin.get("/admin/reports_data")
+def admin_reports():
+    try:
+        accomplishment_statuses = ["Accomplished"]
 
+        def get_bookings_trend():
+            try:
+                bookings_trend = (
+                    db.session.query(
+                        func.extract('year', Booking.start_time).label('year'),
+                        func.extract('month', Booking.start_time).label('month'),
+                        func.count(Booking.id).label('bookings'),
+                        func.sum(
+                            case(
+                                (Booking.status.in_(accomplishment_statuses), 1),
+                                else_=0,
+                            )
+                        ).label('accomplished'),
+                        func.sum(case((Booking.status == "Cancelled", 1), else_=0)).label('cancelled'),
+                        func.sum(func.coalesce(Payments.amount, 0)).label('revenue'),
+                    )
+                    .outerjoin(Payments, Payments.booking_id==Booking.id)
+                    .group_by('year', 'month')
+                    .order_by(desc('year'), desc('month'))
+                    .limit(6)
+                    .all()
+                )
+                mode = "extract"
+            except Exception:
+                bookings_trend = (
+                    db.session.query(
+                        func.strftime('%Y-%m', Booking.start_time).label('month'),
+                        func.count(Booking.id).label('bookings'),
+                        func.sum(
+                            case(
+                                (Booking.status.in_(accomplishment_statuses), 1),
+                                else_=0,
+                            )
+                        ).label('accomplished'),
+                        func.sum(case((Booking.status == "Cancelled", 1), else_=0)).label('cancelled'),
+                        func.sum(func.coalesce(Payments.amount, 0)).label('revenue'),
+                    )
+                    .outerjoin(Payments, Payments.booking_id==Booking.id)
+                    .group_by('month')
+                    .order_by(desc('month'))
+                    .limit(6)
+                    .all()
+                )
+                mode = "strftime"
+            return bookings_trend, mode
 
+        bookings_trend, _mode = get_bookings_trend()
+        trend_res = []
 
+        for row in bookings_trend:
+            if hasattr(row, "year") and hasattr(row, "month"):
+                if row.year and row.month:
+                    month_str = f"{int(row.year):04d}-{int(row.month):02d}"
+                    month_and_year = datetime(int(row.year), int(row.month), 1).strftime("%B %Y")
+                else:
+                    month_and_year = "Unknown"
+                    month_str = ""
+            else:
+                month_and_year = datetime.strptime(row.month, "%Y-%m").strftime("%B %Y")
+                month_str = row.month
 
+            # Top lot
+            if _mode == 'strftime':
+                top_lot_q = db.session.query(
+                    ParkingLot.name, func.count(Booking.id).label('cnt')
+                ).join(
+                    Booking, Booking.parking_lot_id==ParkingLot.id
+                ).filter(
+                    func.strftime('%Y-%m', Booking.start_time)==month_str
+                ).group_by(ParkingLot.id).order_by(desc('cnt')).first()
+            else:
+                top_lot_q = db.session.query(
+                    ParkingLot.name, func.count(Booking.id).label('cnt')
+                ).join(
+                    Booking, Booking.parking_lot_id==ParkingLot.id
+                ).filter(
+                    func.extract('year', Booking.start_time)==row.year,
+                    func.extract('month', Booking.start_time)==row.month
+                ).group_by(ParkingLot.id).order_by(desc('cnt')).first()
+
+            bookings = int(row.bookings)
+            accomplished = int(getattr(row, "accomplished", 0) or 0)
+            accomplishment_rate = f'{round(100 * accomplished / bookings, 1) if bookings else 0}%'
+
+            trend_res.append({
+                'month_and_year': month_and_year,
+                'bookings': bookings,
+                'accomplishment_rate': accomplishment_rate,
+                'revenue': f"${row.revenue or 0}",
+                'top_parking_spot': top_lot_q[0] if top_lot_q else '-'
+            })
+
+        # Bookings Analytics Table
+        lot_rows = []
+        for lot in ParkingLot.query.all():
+            bookings = Booking.query.filter_by(parking_lot_id=lot.id).all()
+            accomplished = sum(1 for b in bookings if b.status and b.status == "Accomplished")
+            cancelled = sum(1 for b in bookings if b.status and b.status == "Cancelled")
+            lot_rows.append({
+                'name': lot.name,
+                'capacity': lot.capacity,
+                'location': lot.address,
+                'bookings_total': len(bookings),
+                'accomplishment_rate': f"{round(100 * accomplished/len(bookings),1) if bookings else 0}%",
+                'cancellation_rate': f"{round(100 * cancelled/len(bookings),1) if bookings else 0}%"
+            })
+
+        lots_table = []
+        for lot in ParkingLot.query.all():
+            rev = (
+                db.session.query(func.coalesce(func.sum(Payments.amount),0))
+                .join(Booking, Booking.id==Payments.booking_id)
+                .filter(Booking.parking_lot_id==lot.id, Payments.status=="paid")
+                .scalar()
+            )
+            lots_table.append({
+                "lot": lot.name,
+                "capacity": lot.capacity,
+                "price": f"${lot.price}",
+                "total_revenue": f"${rev or 0}",
+            })
+
+        status_table = []
+        for lot in ParkingLot.query.all():
+            status_table.append({
+                "lot": lot.name,
+                "capacity": lot.capacity,
+                "occupied": lot.occupied,
+            })
+
+        users_table = []
+        for user in User.query.filter_by(role='user').all():
+            bookings = Booking.query.filter_by(customer_id=user.id).all()
+            accomplished = sum(1 for b in bookings if b.status and b.status == "Accomplished")
+            cancelled = sum(1 for b in bookings if b.status and b.status == "Cancelled")
+            paid = (
+                db.session.query(func.sum(Payments.amount))
+                .join(Booking)
+                .filter(Booking.customer_id==user.id, Payments.status=="paid")
+                .scalar() or 0
+            )
+            unpaid = (
+                db.session.query(func.sum(Payments.amount))
+                .join(Booking)
+                .filter(Booking.customer_id==user.id, Payments.status=="unpaid")
+                .scalar() or 0
+            )
+            users_table.append({
+                "name": f"{user.fname or ''} {user.lname or ''}".strip() or user.username,
+                "email": user.email,
+                "address": user.address,
+                "bookings_availed": len(bookings),
+                "bookings_accomplished": accomplished,
+                "bookings_cancelled": cancelled,
+                "revenue_spent": f"${paid}",
+                "revenue_unpaid": f"${unpaid}",
+            })
+
+        return jsonify({
+            "trend": trend_res,
+            "lots_analytics": lot_rows,
+            "lots_table": lots_table,
+            "status_table": status_table,
+            "users_table": users_table,
+        })
+
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+@admin.post("/admin/generate_report_pdf")
+def start_pdf_report():
+    report_data = request.get_json()
+    task = generate_report_pdf.apply_async(args=[report_data])
+    return jsonify({"task_id": task.id})
+
+@admin.get("/admin/fetch_report_pdf")
+def get_report_pdf():
+    pdf_path = os.path.join(current_app.config.get('REPORTS_DIR', '/tmp'), "Parksy_Reports.pdf")
+    return send_file(pdf_path, as_attachment=True, download_name="Parksy_Reports.pdf")
 
 @admin.route("/admin/queries")
 def queries_page():

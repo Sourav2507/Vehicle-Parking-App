@@ -1,123 +1,183 @@
 {% extends "admin.html" %}
-
 {% block admin_head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}" />
+<style>
+  /* Custom paddings for full-width table cards */
+  .custom-padded-table-card {
+    padding-left: 2.5rem !important;
+    padding-right: 2.5rem !important;
+    padding-top: 2.0rem !important;
+    padding-bottom: 2.0rem !important;
+  }
+</style>
 {% endblock %}
 
 {% block admin_content %}
 <div class="container py-4" id="admin-reports-app">
+
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold text-dark">Reports</h2>
+    <button id="download-report-btn" class="btn btn-primary" @click="downloadEntireReport">
+  Download Entire Report
+</button>
+
   </div>
 
-  <!-- Graphs Row -->
-  <div class="row g-4 mb-4">
-    <div class="col-md-6">
-      <div class="card p-3">
-        <canvas id="bookingsOverTimeChart"></canvas>
-        <p class="card-text fw-medium mt-3">Bookings Over Time</p>
-      </div>
+  <div class="card my-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <span class="fw-bold h4 m-0">Monthly Bookings Trend</span>
+      <button id="monthly-bookings-trend-data-btn" class="btn btn-primary btn-sm" @click="exportTrendCSV">Export as CSV</button>
     </div>
-    <div class="col-md-6">
-      <div class="card p-3">
-        <canvas id="bookingsBySlotChart"></canvas>
-        <p class="card-text fw-medium mt-3">Bookings by Slot</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Analytics Table -->
-  <div class="card mb-4">
-    <div class="card-body table-responsive">
-      <table class="table table-bordered table-striped">
+    <div class="card-body table-responsive custom-padded-table-card">
+      <table class="table table-bordered table-striped mb-0 w-100">
         <thead class="table-light">
           <tr>
-            <th>Date</th>
+            <th>Month and Year</th>
             <th>Bookings</th>
-            <th>Revenue</th>
+            <th>Accomplishment Rate</th>
+            <th>Revenue Generated</th>
+            <th>Top Parking Spot</th>
           </tr>
         </thead>
         <tbody>
-          {% for entry in data %}
-          <tr>
-            <td>{{ entry.date }}</td>
-            <td class="text-muted">{{ entry.bookings }}</td>
-            <td class="text-muted">${{ entry.revenue }}</td>
+          <tr v-for="row in trend" :key="row.month_and_year">
+            <td>${ row.month_and_year }</td>
+            <td>${ row.bookings }</td>
+            <td>${ row.accomplishment_rate }</td>
+            <td>${ row.revenue }</td>
+            <td>${ row.top_parking_spot }</td>
           </tr>
-          {% endfor %}
+          <tr v-if="trend.length === 0 && !loading"><td colspan="5" class="text-muted text-center">No data</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- Pie Charts Row -->
-  <div class="row g-4 mb-4">
-    <div class="col-md-6">
-      <div class="card p-3">
-        <canvas id="statusDistributionChart"></canvas>
-        <p class="card-text fw-medium mt-3">Booking Status Distribution</p>
-      </div>
+  <!-- Booking Spots Table -->
+  <div class="card my-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <span class="fw-bold h4 m-0">Bookings Analytics</span>
+      <button id="bookings-data-btn" class="btn btn-primary btn-sm" @click="exportLotsAnalyticsCSV">Export as CSV</button>
     </div>
-    <div class="col-md-6">
-      <div class="card p-3">
-        <canvas id="revenueStatusChart"></canvas>
-        <p class="card-text fw-medium mt-3">Revenue Breakdown</p>
-      </div>
+    <div class="card-body table-responsive custom-padded-table-card">
+      <table class="table table-bordered table-striped mb-0 w-100">
+        <thead class="table-light">
+          <tr>
+            <th>Name</th>
+            <th>Capacity</th>
+            <th>Location</th>
+            <th>Bookings (till now)</th>
+            <th>Accomplishment Rate</th>
+            <th>Cancellation Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in lots_analytics" :key="row.name">
+            <td>${ row.name }</td>
+            <td>${ row.capacity }</td>
+            <td>${ row.location }</td>
+            <td>${ row.bookings_total }</td>
+            <td>${ row.accomplishment_rate }</td>
+            <td>${ row.cancellation_rate }</td>
+          </tr>
+          <tr v-if="lots_analytics.length === 0 && !loading"><td colspan="6" class="text-muted text-center">No data</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
   <!-- Revenue Tables Row -->
   <div class="row g-4 mb-4">
     <div class="col-md-6">
-      <div class="card p-3">
-        <p class="card-text fw-medium">Revenue by Product</p>
-        <table class="table table-bordered mt-2">
+      <div class="card p-3 my-2">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span class="fw-bold h4 m-0">Parking Lots</span>
+          <button id="parking-lots-data-btn" class="btn btn-primary btn-sm" @click="exportLotsTableCSV">Export as CSV</button>
+        </div>
+        <table class="table table-bordered table-striped mt-2 w-100">
           <thead class="table-light">
             <tr>
-              <th>Parking Name</th>
+              <th>Parking Lot</th>
               <th>Capacity</th>
               <th>Price/Hour</th>
+              <th>Total Revenue</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>Lot A</td><td>40</td><td>$2.5</td></tr>
-            <tr><td>Lot B</td><td>30</td><td>$3.0</td></tr>
-            <tr><td>Garage C</td><td>60</td><td>$2.0</td></tr>
+            <tr v-for="row in lots_table" :key="row.lot">
+              <td>${ row.lot }</td>
+              <td>${ row.capacity }</td>
+              <td>${ row.price }</td>
+              <td>${ row.total_revenue }</td>
+            </tr>
+            <tr v-if="lots_table.length === 0 && !loading"><td colspan="4" class="text-muted text-center">No data</td></tr>
           </tbody>
         </table>
       </div>
     </div>
     <div class="col-md-6">
-      <div class="card p-3">
-        <p class="card-text fw-medium">Top Earning Locations</p>
-        <table class="table table-bordered mt-2">
+      <div class="card p-3 my-2">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span class="fw-bold h4 m-0">Current Parking Lot Status</span>
+          <button id="current-parking-data-btn" class="btn btn-primary btn-sm" @click="exportStatusTableCSV">Export as CSV</button>
+        </div>
+        <table class="table table-bordered table-striped mt-2 w-100">
           <thead class="table-light">
             <tr>
-              <th>Region</th>
-              <th>Total Bookings</th>
-              <th>Total Revenue</th>
+              <th>Parking Lot</th>
+              <th>Capacity</th>
+              <th>Occupied</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>Downtown</td><td>120</td><td>$4200</td></tr>
-            <tr><td>City Center</td><td>90</td><td>$3750</td></tr>
-            <tr><td>Uptown</td><td>60</td><td>$2800</td></tr>
+            <tr v-for="row in status_table" :key="row.lot">
+              <td>${ row.lot }</td>
+              <td>${ row.capacity }</td>
+              <td>${ row.occupied }</td>
+            </tr>
+            <tr v-if="status_table.length === 0 && !loading"><td colspan="3" class="text-muted text-center">No data</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- Final Chart: Annual Revenue -->
-  <div class="card p-3 mb-4">
-    <canvas id="annualRevenueChart"></canvas>
-    <p class="card-text fw-medium mt-3">Annual Revenue Distribution</p>
+  <!-- USER Data -->
+  <div class="card my-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <span class="fw-bold h4 m-0">Users Analytics</span>
+      <button id="download-users-data-btn" class="btn btn-primary btn-sm" @click="exportUsersTableCSV">Export as CSV</button>
+    </div>
+    <div class="card-body table-responsive custom-padded-table-card">
+      <table class="table table-bordered table-striped mb-0 w-100" id="users-data-table">
+        <thead class="table-light">
+          <tr>
+            <th>Name</th>
+            <th>Email Id</th>
+            <th>Address</th>
+            <th>Bookings Availed</th>
+            <th>Bookings Accomplished</th>
+            <th>Booking Cancelled</th>
+            <th>Revenue Spent</th>
+            <th>Revenue Unpaid</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in users_table" :key="row.email">
+            <td>${ row.name }</td>
+            <td>${ row.email }</td>
+            <td>${ row.address }</td>
+            <td>${ row.bookings_availed }</td>
+            <td>${ row.bookings_accomplished }</td>
+            <td>${ row.bookings_cancelled }</td>
+            <td>${ row.revenue_spent }</td>
+            <td>${ row.revenue_unpaid }</td>
+          </tr>
+          <tr v-if="users_table.length === 0 && !loading"><td colspan="8" class="text-muted text-center">No data</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-{{ super() }}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/reports.js') }}"></script>
 {% endblock %}
