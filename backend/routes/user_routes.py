@@ -266,13 +266,14 @@ def cancel_booking():
 
         try:
             parking_lot = ParkingLot.query.get(lot_id)
-            if parking_lot.occupied > 0:
+            if parking_lot and parking_lot.occupied > 0:
                 parking_lot.occupied -= 1
 
-            db.session.delete(booking)
+            # Instead of delete, update status to 'Cancelled'
+            booking.status = 'Cancelled'
             db.session.commit()
 
-            return jsonify({"success": True})
+            return jsonify({"success": True, "message": "Booking cancelled successfully"})
 
         except Exception as e:
             db.session.rollback()
@@ -345,17 +346,16 @@ def cancel_existing_booking(booking_id):
             if lot and lot.occupied > 0:
                 lot.occupied -= 1
 
-            Payments.query.filter_by(booking_id=booking.id).delete()
+            # Instead of deleting payment and booking, set booking status to 'Cancelled'
+            booking.status = 'Cancelled'
 
-            db.session.delete(booking)
             db.session.commit()
 
-            return jsonify({'success': True, 'message': 'Booking deleted successfully'})
+            return jsonify({'success': True, 'message': 'Booking cancelled successfully'})
 
         except Exception as e:
             db.session.rollback()
             return jsonify({'success': False, 'message': str(e)}), 500
-
 
 @user.route("/user/occupy_spot/<int:booking_id>", methods=["POST"])
 def occupy_spot(booking_id):

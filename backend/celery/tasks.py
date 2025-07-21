@@ -2,11 +2,9 @@ from celery import shared_task
 from flask_mail import Message
 from backend.config.extensions import mail
 from flask import current_app,render_template_string
-from datetime import datetime
+from datetime import datetime,timedelta
 from weasyprint import HTML
-import time
-import os
-import re
+import time,re,os,uuid
 from backend.models import *
 
 @shared_task(ignore_results = False)
@@ -136,8 +134,6 @@ def generate_report_pdf(report_data):
     Generate a PDF report for Parksy using report_data (dict) sent from frontend.
     The PDF is rendered from an inline HTML Jinja template using WeasyPrint.
     """
-
-    # Formatting the current date in the requested format, e.g., "Monday, July 21, 2025, 9:31 PM IST"
     now_str = datetime.now().strftime("%A, %B %d, %Y, %I:%M %p IST")
 
     template = """
@@ -301,3 +297,179 @@ def generate_report_pdf(report_data):
     )
     HTML(string=html_str).write_pdf(pdf_filename)
     return pdf_filename
+
+
+@shared_task
+def send_monthly_activity_report():
+    with current_app.app_context():
+        now = datetime.utcnow()
+
+        # Only continue if today is the last day of the month 
+        tomorrow = now + timedelta(days=1)
+        if tomorrow.day != 1:
+            print("Not the last day of the month, skipping monthly report generation.")
+            return
+        
+
+
+        first_of_month = datetime(now.year, now.month, 1)
+        if now.month == 12:
+            first_of_next_month = datetime(now.year + 1, 1, 1)
+        else:
+            first_of_next_month = datetime(now.year, now.month + 1, 1)
+        month_year_str = first_of_month.strftime("%B %Y")
+
+        now_str = datetime.now().strftime("%A, %B %d, %Y, %I:%M %p IST")
+
+        users = User.query.filter_by(role='user', active=True).all()
+        for user in users:
+            report_id = str(uuid.uuid4())
+
+            bookings = Booking.query.filter(
+                Booking.customer_id == user.id,
+                Booking.start_time >= first_of_month,
+                Booking.start_time < first_of_next_month
+            ).all()
+            payments = Payments.query.filter(
+                Payments.customer_id == user.id,
+                Payments.due_date >= first_of_month.date(),
+                Payments.due_date < first_of_next_month.date()
+            ).all()
+
+            # Stats for summary
+            parking_lot_counts = {}
+            total_spent = 0
+            for booking in bookings:
+                lotname = booking.parking_lot.name if booking.parking_lot else "Unknown"
+                parking_lot_counts[lotname] = parking_lot_counts.get(lotname, 0) + 1
+                payment = Payments.query.filter_by(booking_id=booking.id, status="paid").first()
+                if payment: total_spent += payment.amount or 0
+            most_used = (
+                max(parking_lot_counts, key=parking_lot_counts.get)
+                if parking_lot_counts else "N/A"
+            )
+
+            email_body = (
+                f"Hi {user.fname or user.username or 'User'},\n\n"
+                "Thanks for keeping up with PARKSY! We appreciate your trust and loyalty.\n"
+                "Please find your monthly activity report attached as a PDF.\n\n"
+                "Stay smart, commute happy!\n"
+                "Team Parksy"
+            )
+
+            pdf_template = """
+            <html>
+            <head>
+              <style>
+                body { font-family: DejaVu Sans, Arial, sans-serif; }
+                h2 { margin-top: 1.4em; color: #537eda; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 2em; font-size: 11px; }
+                th, td { border: 1px solid #bbb; padding: 5px; text-align: left; }
+                th { background: #f0f0f0; }
+              </style>
+            </head>
+            <body>
+              <h2>Bookings Summary - {{ month_year }}</h2>
+              <table>
+                <tr><th>Total Bookings</th><td>{{ total_bookings }}</td></tr>
+                <tr><th>Most Used Parking Lot</th><td>{{ most_used }}</td></tr>
+                <tr><th>Total Amount Spent</th><td>₹{{ total_spent }}</td></tr>
+              </table>
+
+              <h2>Bookings Details</h2>
+              {% if bookings %}
+              <table>
+                <tr>
+                  <th>Date</th>
+                  <th>Parking Lot</th>
+                  <th>Status</th>
+                  <th>Paid Amount</th>
+                </tr>
+                {% for bk in bookings %}
+                <tr>
+                  <td>{{ bk.start_time.strftime('%Y-%m-%d') }}</td>
+                  <td>{{ bk.parking_lot.name if bk.parking_lot else '' }}</td>
+                  <td>{{ bk.status }}</td>
+                  <td>
+                    {% set payment = (payments|selectattr('booking_id', 'equalto', bk.id)|selectattr('status', 'equalto', 'paid')|list) %}
+                    {{ payment[0].amount if payment else 0 }}
+                  </td>
+                </tr>
+                {% endfor %}
+              </table>
+              {% else %}
+              <p>No bookings in this period.</p>
+              {% endif %}
+
+              <h2>Payment History</h2>
+              {% if payments %}
+              <table>
+                <tr>
+                  <th>Payment Date</th>
+                  <th>Booking</th>
+                  <th>Status</th>
+                  <th>Amount</th>
+                </tr>
+                {% for pay in payments %}
+                <tr>
+                  <td>{{ pay.payment_date.strftime('%Y-%m-%d') if pay.payment_date else '' }}</td>
+                  <td>{{ pay.booking_id }}</td>
+                  <td>{{ pay.status }}</td>
+                  <td>₹{{ pay.amount }}</td>
+                </tr>
+                {% endfor %}
+              </table>
+              {% else %}
+              <p>No payment history for this period.</p>
+              {% endif %}
+            </body>
+            </html>
+            """
+
+
+            pdf_dir = current_app.config.get('REPORTS_DIR', '/tmp')
+            os.makedirs(pdf_dir, exist_ok=True)
+            pdf_filename = os.path.join(pdf_dir, f"{report_id}.pdf")
+
+            pdf_html_str = render_template_string(
+                pdf_template,
+                month_year=month_year_str,
+                total_bookings=len(bookings),
+                most_used=most_used,
+                total_spent=total_spent,
+                bookings=bookings,
+                payments=payments
+            )
+            HTML(string=pdf_html_str).write_pdf(pdf_filename)
+
+            subject = f"Your Monthly Activity Report ({month_year_str})"
+            recipient = user.email
+            msg = Message(
+                subject=subject,
+                sender=current_app.config['MAIL_USERNAME'],
+                recipients=[recipient],
+                body=email_body,
+            )
+            with open(pdf_filename, "rb") as fp:
+                msg.attach(
+                    f"{report_id}.pdf",
+                    "application/pdf",
+                    fp.read()
+                )
+
+            try:
+                mail.send(msg)
+                print(f"Monthly report sent to {recipient}")
+            except Exception as e:
+                print(f"Error sending to {recipient}: {e}")
+
+            try:
+                os.remove(pdf_filename)
+            except Exception:
+                pass
+
+
+
+
+
+
