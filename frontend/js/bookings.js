@@ -14,9 +14,9 @@ new Vue({
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          this.upcoming = data.upcoming;
-          this.past = data.past;
-          this.cancelled = data.cancelled;
+          this.upcoming = data.upcoming.reverse();
+          this.past = data.past.reverse();
+          this.cancelled = data.cancelled.reverse();
         } else {
           this.error = data.message;
         }

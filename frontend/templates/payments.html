@@ -16,6 +16,37 @@
       <h1 class="h3 fw-bold text-dark">Payments</h1>
     </div>
 
+    <!-- Unpaid Bookings Section -->
+    <h4 class="mb-3 px-2">Unpaid Bookings</h4>
+    <div class="table-responsive px-2">
+      <table class="table table-bordered bg-light">
+        <thead class="table-light">
+          <tr>
+            <th class="text-center">Parking</th>
+            <th class="text-center">Booking Date</th>
+            <th class="text-center">Amount</th>
+            <th class="text-center">Due By</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="u in unpaidBookings" :key="u.id">
+            <td class="text-center">${ u.parking_lot }</td>
+            <td class="text-center">${ u.booking_date }</td>
+            <td class="text-center">₹${ u.amount.toFixed(2) }</td>
+            <td class="text-center">${ u.due_by }</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-primary" @click="payNow(u.id)">Pay Now</button>
+            </td>
+          </tr>
+          <tr v-if="!unpaidBookings.length">
+            <td colspan="5" class="text-center text-muted">No unpaid bookings found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+
     <!-- Payment History Section -->
     <h4 class="mb-3 px-2">Payment History</h4>
     <div class="table-responsive mb-5 px-2">
@@ -47,35 +78,6 @@
       </table>
     </div>
 
-    <!-- Unpaid Bookings Section -->
-    <h4 class="mb-3 px-2">Unpaid Bookings</h4>
-    <div class="table-responsive px-2">
-      <table class="table table-bordered bg-light">
-        <thead class="table-light">
-          <tr>
-            <th class="text-center">Parking</th>
-            <th class="text-center">Booking Date</th>
-            <th class="text-center">Amount</th>
-            <th class="text-center">Due By</th>
-            <th class="text-center">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="u in unpaidBookings" :key="u.id">
-            <td class="text-center">${ u.parking_lot }</td>
-            <td class="text-center">${ u.booking_date }</td>
-            <td class="text-center">₹${ u.amount.toFixed(2) }</td>
-            <td class="text-center">${ u.due_by }</td>
-            <td class="text-center">
-              <button class="btn btn-sm btn-outline-primary" @click="payNow(u.id)">Pay Now</button>
-            </td>
-          </tr>
-          <tr v-if="!unpaidBookings.length">
-            <td colspan="5" class="text-center text-muted">No unpaid bookings found.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
 
   </div>
 </div>

@@ -13,8 +13,8 @@ new Vue({
       fetch("/user/payments-data")
         .then(res => res.json())
         .then(data => {
-          this.paymentHistory = data.history || [];
-          this.unpaidBookings = data.unpaid || [];
+          this.paymentHistory = data.history.reverse() || [];
+          this.unpaidBookings = data.unpaid.reverse() || [];
         })
         .catch(err => {
           console.error("Error loading payment data:", err);

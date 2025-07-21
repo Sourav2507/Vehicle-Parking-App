@@ -1,7 +1,7 @@
 from flask import Blueprint,render_template,redirect,url_for,session,jsonify,request,current_app
 from werkzeug.utils import secure_filename
 import os
-from sqlalchemy import func,extract
+from sqlalchemy import func,extract,or_
 from backend.config.extensions import db,cache
 from backend.models import *
 from datetime import datetime, time
@@ -94,14 +94,25 @@ def dashboard_data():
             booking_status[status] = count
 
         payment_status_sums = (
-        db.session.query(Payments.status, func.sum(Payments.amount))
-        .filter_by(customer_id=user_obj.id)
-        .group_by(Payments.status)
-        .all()
+            db.session.query(Payments.status, func.sum(Payments.amount))
+            .filter_by(customer_id=user_obj.id)
+            .group_by(Payments.status)
+            .all()
         )
         
-        payment_status = {status: total or 0 for status, total in payment_status_sums}
+        total_unpaid = 0
+        total_paid = 0
 
+        for status, total in payment_status_sums:
+            if status == "paid":
+                total_paid += total or 0
+            elif status in ("unpaid", "expired"):
+                total_unpaid += total or 0
+
+        payment_status = {
+            "paid": total_paid,
+            "unpaid": total_unpaid
+        }
 
         total_expenditure = (
             db.session.query(func.sum(Payments.amount))

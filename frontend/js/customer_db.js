@@ -117,7 +117,9 @@ new Vue({
       if (!ctx) return;
 
       const paid = this.payment_status["paid"] || 0;
-      const unpaid = this.payment_status["unpaid"] || 0;
+      const unpaid =
+        (this.payment_status["unpaid"] || 0) +
+        (this.payment_status["expired"] || 0);
 
       new Chart(ctx, {
         type: "doughnut",
