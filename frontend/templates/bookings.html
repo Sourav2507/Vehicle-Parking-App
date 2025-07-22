@@ -113,15 +113,6 @@
               </button>
             </template>
 
-            <template v-else-if="booking.status === 'Accomplished'">
-              <a
-                href="#"
-                class="text-decoration-none"
-                @click.prevent="downloadReceipt(booking)"
-                >Download Receipt</a
-              >
-            </template>
-
             <template v-else>
               <span class="text-muted">—</span>
             </template>

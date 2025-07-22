@@ -18,9 +18,8 @@
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold text-dark">Reports</h2>
     <button id="download-report-btn" class="btn btn-primary" @click="downloadEntireReport">
-  Download Entire Report
-</button>
-
+      Download Entire Report
+    </button>
   </div>
 
   <div class="card my-4">
@@ -44,7 +43,7 @@
             <td>${ row.month_and_year }</td>
             <td>${ row.bookings }</td>
             <td>${ row.accomplishment_rate }</td>
-            <td>${ row.revenue }</td>
+            <td>${ formatINR(row.revenue) }</td>
             <td>${ row.top_parking_spot }</td>
           </tr>
           <tr v-if="trend.length === 0 && !loading"><td colspan="5" class="text-muted text-center">No data</td></tr>
@@ -56,7 +55,7 @@
   <!-- Booking Spots Table -->
   <div class="card my-4">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-      <span class="fw-bold h4 m-0">Bookings Analytics</span>
+      <span class="fw-bold h4 m-0">Bookings</span>
       <button id="bookings-data-btn" class="btn btn-primary btn-sm" @click="exportLotsAnalyticsCSV">Export as CSV</button>
     </div>
     <div class="card-body table-responsive custom-padded-table-card">
@@ -107,8 +106,8 @@
             <tr v-for="row in lots_table" :key="row.lot">
               <td>${ row.lot }</td>
               <td>${ row.capacity }</td>
-              <td>${ row.price }</td>
-              <td>${ row.total_revenue }</td>
+              <td>${ formatINR(row.price) }</td>
+              <td>${ formatINR(row.total_revenue) }</td>
             </tr>
             <tr v-if="lots_table.length === 0 && !loading"><td colspan="4" class="text-muted text-center">No data</td></tr>
           </tbody>
@@ -118,7 +117,7 @@
     <div class="col-md-6">
       <div class="card p-3 my-2">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
-          <span class="fw-bold h4 m-0">Current Parking Lot Status</span>
+          <span class="fw-bold h4 m-0">Current Parking Lot</span>
           <button id="current-parking-data-btn" class="btn btn-primary btn-sm" @click="exportStatusTableCSV">Export as CSV</button>
         </div>
         <table class="table table-bordered table-striped mt-2 w-100">
@@ -145,7 +144,7 @@
   <!-- USER Data -->
   <div class="card my-4">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-      <span class="fw-bold h4 m-0">Users Analytics</span>
+      <span class="fw-bold h4 m-0">Users</span>
       <button id="download-users-data-btn" class="btn btn-primary btn-sm" @click="exportUsersTableCSV">Export as CSV</button>
     </div>
     <div class="card-body table-responsive custom-padded-table-card">
@@ -170,8 +169,8 @@
             <td>${ row.bookings_availed }</td>
             <td>${ row.bookings_accomplished }</td>
             <td>${ row.bookings_cancelled }</td>
-            <td>${ row.revenue_spent }</td>
-            <td>${ row.revenue_unpaid }</td>
+            <td>${ formatINR(row.revenue_spent) }</td>
+            <td>${ formatINR(row.revenue_unpaid) }</td>
           </tr>
           <tr v-if="users_table.length === 0 && !loading"><td colspan="8" class="text-muted text-center">No data</td></tr>
         </tbody>
@@ -179,5 +178,6 @@
     </div>
   </div>
 </div>
+
 <script src="{{ url_for('static', filename='js/reports.js') }}"></script>
 {% endblock %}

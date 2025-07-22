@@ -61,8 +61,8 @@ def dashboard_data():
             "cards": [
                 {"label": "Total Users", "value": total_users},
                 {"label": "Total Bookings", "value": total_bookings},
-                {"label": "Active Slots", "value": active_slots},
-                {"label": "Revenue", "value": f"₹{total_revenue:,}"}
+                {"label": "Active Parking Lots", "value": active_slots},
+                {"label": "Total Revenue", "value": f"₹{total_revenue:,}"}
             ],
             "activities": [
                 {"user": "sourav", "action": "Logged in", "timestamp": "2025-07-15 14:30"},
@@ -302,7 +302,7 @@ def accept_booking(booking_id):
             customer_id=booking.customer_id,
             role="user",
             heading="Booking Accepted",
-            message=f"Your booking for {lot.name} has been accepted. Amount due: ₹{amount}.Please pay it within 6 hours to confirm your Booking."
+            message=f"Your booking for {lot.name} (Slot ID: {booking.slot_id}) has been accepted. Amount due: ₹{amount}. Please pay it within 6 hours to confirm your booking."
         )
         db.session.add(notif)
 
@@ -321,8 +321,16 @@ def reject_booking(booking_id):
         if not booking:
             return jsonify({"success": False, "message": "Booking not found"}), 404
 
-        if booking.status != 'Requested':
+        if booking.status not in ['Requested', 'Accepted']:
             return jsonify({"success": False, "message": "Already processed"}), 400
+
+        # ---- Expire active payment request if exists ----
+        active_payments = Payments.query.filter_by(
+            booking_id=booking.id,
+            status="unpaid"
+        ).all()
+        for payment in active_payments:
+            payment.status = "expired"
 
         lot = ParkingLot.query.get(booking.parking_lot_id)
         if lot and lot.occupied > 0:
@@ -426,6 +434,7 @@ def admin_reports():
                 mode = "strftime"
             return bookings_trend, mode
 
+
         bookings_trend, _mode = get_bookings_trend()
         trend_res = []
 
@@ -464,13 +473,15 @@ def admin_reports():
             accomplished = int(getattr(row, "accomplished", 0) or 0)
             accomplishment_rate = f'{round(100 * accomplished / bookings, 1) if bookings else 0}%'
 
+            # Send revenue as numeric for frontend formatting
             trend_res.append({
                 'month_and_year': month_and_year,
                 'bookings': bookings,
                 'accomplishment_rate': accomplishment_rate,
-                'revenue': f"${row.revenue or 0}",
+                'revenue': float(row.revenue or 0),
                 'top_parking_spot': top_lot_q[0] if top_lot_q else '-'
             })
+
 
         # Bookings Analytics Table
         lot_rows = []
@@ -487,6 +498,7 @@ def admin_reports():
                 'cancellation_rate': f"{round(100 * cancelled/len(bookings),1) if bookings else 0}%"
             })
 
+
         lots_table = []
         for lot in ParkingLot.query.all():
             rev = (
@@ -498,9 +510,10 @@ def admin_reports():
             lots_table.append({
                 "lot": lot.name,
                 "capacity": lot.capacity,
-                "price": f"${lot.price}",
-                "total_revenue": f"${rev or 0}",
+                "price": float(lot.price),
+                "total_revenue": float(rev or 0),
             })
+
 
         status_table = []
         for lot in ParkingLot.query.all():
@@ -509,6 +522,7 @@ def admin_reports():
                 "capacity": lot.capacity,
                 "occupied": lot.occupied,
             })
+
 
         users_table = []
         for user in User.query.filter_by(role='user').all():
@@ -534,8 +548,8 @@ def admin_reports():
                 "bookings_availed": len(bookings),
                 "bookings_accomplished": accomplished,
                 "bookings_cancelled": cancelled,
-                "revenue_spent": f"${paid}",
-                "revenue_unpaid": f"${unpaid}",
+                "revenue_spent": float(paid),
+                "revenue_unpaid": float(unpaid),
             })
 
         return jsonify({

@@ -38,8 +38,8 @@ new Vue({
           const iconMap = {
             "Total Users": "bi bi-people",
             "Total Bookings": "bi bi-calendar-check",
-            "Active Slots": "bi bi-pin-map",
-            Revenue: "bi bi-currency-rupee",
+            "Active Parking Lots": "bi bi-pin-map",
+            "Total Revenue": "bi bi-currency-rupee",
           };
           return {
             ...card,

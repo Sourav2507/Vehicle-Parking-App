@@ -142,30 +142,7 @@
             </div>
 
             <!-- Recent Activities -->
-            <div class="mb-3">
-              <h4 class="fw-bold">Recent Activities</h4>
-            </div>
-            <div class="table-responsive">
-              <table class="table table-bordered table-hover table-striped">
-                <thead class="table-light">
-                  <tr>
-                    <th>User</th>
-                    <th>Activity</th>
-                    <th>Timestamp</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="activity in recentActivities"
-                    :key="activity.timestamp"
-                  >
-                    <td>${ activity.user }</td>
-                    <td>${ activity.action }</td>
-                    <td>${ activity.timestamp }</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            
           </div>
         </div>
       </div>

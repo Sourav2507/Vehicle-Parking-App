@@ -114,8 +114,5 @@ new Vue({
           alert("Error releasing spot.");
         });
     },
-    downloadReceipt(booking) {
-      alert("Receipt download feature coming soon.");
-    },
   },
 });

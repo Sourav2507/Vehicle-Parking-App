@@ -10,25 +10,34 @@ new Vue({
     loading: true,
   },
   methods: {
+    formatINR(value) {
+      if (value === null || value === undefined) return "";
+      let number = Number(value);
+      if (isNaN(number)) return value;
+      return (
+        "₹" +
+        number.toLocaleString("en-IN", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        })
+      );
+    },
+
     exportCSV(dataArray, columns, filename) {
-      // columns: [{header: "Col Name", key: "data_key"}, ...]
       let csv =
         columns.map((col) => `"${col.header}"`).join(",") +
         "\n" +
         dataArray
           .map((row) =>
             columns
-              .map(
-                (col) =>
-                  `"${(row[col.key] !== undefined ? row[col.key] : "")
-                    .toString()
-                    .replace(/"/g, '""')}"`
-              )
+              .map((col) => {
+                let val = row[col.key] !== undefined ? row[col.key] : "";
+                return `"${val.toString().replace(/"/g, '""')}"`;
+              })
               .join(",")
           )
           .join("\n");
 
-      // Create and trigger download
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
@@ -108,28 +117,30 @@ new Vue({
         "users_analytics.csv"
       );
     },
-    downloadEntireReport() {
-    const fullReport = {
-      trend: this.trend,
-      lots_analytics: this.lots_analytics,
-      lots_table: this.lots_table,
-      status_table: this.status_table,
-      users_table: this.users_table
-    };
 
-    fetch("/admin/generate_report_pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(fullReport)
-    })
-    .then(res => res.json())
-    .then(data => {
-      setTimeout(() => {
-        window.location = "/admin/fetch_report_pdf";
-      }, 5000);
-    });
-  }
+    downloadEntireReport() {
+      const fullReport = {
+        trend: this.trend,
+        lots_analytics: this.lots_analytics,
+        lots_table: this.lots_table,
+        status_table: this.status_table,
+        users_table: this.users_table,
+      };
+
+      fetch("/admin/generate_report_pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fullReport),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setTimeout(() => {
+            window.location = "/admin/fetch_report_pdf";
+          }, 5000);
+        });
+    },
   },
+
   mounted() {
     console.log("Mounted Successfully !");
     fetch("/admin/reports_data")

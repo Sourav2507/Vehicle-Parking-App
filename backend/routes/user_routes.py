@@ -185,7 +185,7 @@ def find_parking_data():
 
 @user.route('/user/book_spot', methods=['POST'])
 def book_spot():
-    if ("username" in session):
+    if "username" in session:
         if 'user_id' not in session:
             return jsonify({'success': False, 'message': 'Unauthorized'}), 401
 
@@ -211,14 +211,19 @@ def book_spot():
         if available <= 0:
             return jsonify({'success': False, 'message': 'No spots available'})
 
-        # Find used slots
-        used_slots = db.session.query(Booking.slot_id).filter_by(
-            parking_lot_id=lot_id,
-            status='Requested'
-        ).all()
-        used_slot_ids = set(slot[0] for slot in used_slots)
+        # Only consider bookings that overlap with the requested time, and are in 'active' states
+        active_states = ['Requested', 'Accepted', 'Confirmed', 'Occupied']
 
-        # Find first available slot
+        overlapping_bookings = Booking.query.filter(
+            Booking.parking_lot_id == lot_id,
+            Booking.status.in_(active_states),
+            # Overlap test: Existing.start < New.end AND Existing.end > New.start
+            Booking.start_time < end_time,
+            Booking.end_time > start_time,
+        ).all()
+        used_slot_ids = set(b.slot_id for b in overlapping_bookings)
+
+        # Find the first available slot id that is not used in above
         available_slot = next((i for i in range(1, lot.capacity + 1) if i not in used_slot_ids), None)
         if available_slot is None:
             return jsonify({'success': False, 'message': 'No slots free'})
@@ -239,7 +244,7 @@ def book_spot():
         db.session.commit()
 
         return jsonify({'success': True, 'message': 'Booking successful', 'slot': available_slot})
-
+    
 @user.route('/user/cancel_booking', methods=['POST'])
 def cancel_booking():
     if ("username" in session):
@@ -248,7 +253,6 @@ def cancel_booking():
 
         data = request.get_json()
         lot_id = data.get('lot_id')
-
         if not lot_id:
             return jsonify({"success": False, "message": "Invalid request"}), 400
 
@@ -265,6 +269,14 @@ def cancel_booking():
             return jsonify({"success": False, "message": "Booking not found"}), 404
 
         try:
+            # ---- Expire active payment request if exists ----
+            active_payments = Payments.query.filter_by(
+                booking_id=booking.id,
+                status="unpaid"
+            ).all()
+            for payment in active_payments:
+                payment.status = "expired"
+
             parking_lot = ParkingLot.query.get(lot_id)
             if parking_lot and parking_lot.occupied > 0:
                 parking_lot.occupied -= 1
@@ -332,7 +344,7 @@ def my_bookings():
 
 @user.route('/user/cancel_existing_booking/<int:booking_id>', methods=['POST'])
 def cancel_existing_booking(booking_id):
-    if ("username" in session):
+    if "username" in session:
         if 'user_id' not in session:
             return jsonify({'success': False, 'message': 'Unauthorized'}), 401
 
@@ -342,11 +354,19 @@ def cancel_existing_booking(booking_id):
             return jsonify({'success': False, 'message': 'Booking not found'}), 404
 
         try:
+            # Expire any active unpaid payments associated with this booking
+            active_payments = Payments.query.filter_by(
+                booking_id=booking.id,
+                status="unpaid"
+            ).all()
+            for payment in active_payments:
+                payment.status = "expired"
+
             lot = ParkingLot.query.get(booking.parking_lot_id)
             if lot and lot.occupied > 0:
                 lot.occupied -= 1
 
-            # Instead of deleting payment and booking, set booking status to 'Cancelled'
+            # Update booking status to 'Cancelled'
             booking.status = 'Cancelled'
 
             db.session.commit()
@@ -356,7 +376,7 @@ def cancel_existing_booking(booking_id):
         except Exception as e:
             db.session.rollback()
             return jsonify({'success': False, 'message': str(e)}), 500
-
+        
 @user.route("/user/occupy_spot/<int:booking_id>", methods=["POST"])
 def occupy_spot(booking_id):
     if ("username" in session):
