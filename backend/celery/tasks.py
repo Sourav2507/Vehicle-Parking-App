@@ -4,13 +4,10 @@ from backend.config.extensions import mail
 from flask import current_app,render_template_string
 from datetime import datetime,timedelta
 from weasyprint import HTML
+from sqlalchemy import func
+from zoneinfo import ZoneInfo
 import time,re,os,uuid
 from backend.models import *
-
-@shared_task(ignore_results = False)
-def add(x,y):
-    time.sleep(10)
-    return x+y
 
 def is_valid_email(email):
     pattern = r"^[^@\s]+@[^@\s]+\.[a-zA-Z0-9]+$"
@@ -48,7 +45,6 @@ def send_daily_reminder():
             else:
                 print(f"[Celery] Skipped syntactically invalid email: {user.email}")
 
-
 @shared_task
 def expire_booking_if_unpaid(booking_id, payment_id):
 
@@ -57,7 +53,7 @@ def expire_booking_if_unpaid(booking_id, payment_id):
         payment = Payments.query.get(payment_id)
         if not booking or not payment:
             return "No booking or payment found."
-        if payment.status != "paid":
+        if payment.status == "unpaid":
             booking.status = "Rejected"
             payment.status = "expired"
             
@@ -68,10 +64,10 @@ def expire_booking_if_unpaid(booking_id, payment_id):
             notif = Notification(
                 customer_id=booking.customer_id,
                 role="user",
-                heading="Your Parking Booking Has Been Cancelled",
+                heading="Your Parking Booking Has Been Rejected",
                 message=(
                     f"Dear customer,\n\n"
-                    f"Your booking for \"{lot_name}\" has been cancelled because we did not receive your payment within the required time frame of 6 hours.\n\n"
+                    f"Your booking for \"{lot_name}\" has been rejected because we did not receive your payment within the required time frame of 30 Minutes.\n\n"
                     "If this was an oversight or if you need the spot, please feel free to make a new booking at your convenience. "
                     "We recommend completing your payment promptly in the future to secure your parking spot without any interruptions.\n\n"
                     "We appreciate your understanding and thank you for being a valued member of Parksy.\n\n"
@@ -84,8 +80,6 @@ def expire_booking_if_unpaid(booking_id, payment_id):
             db.session.commit()
             return f"Booking {booking_id} rejected, payment {payment_id} expired, notification sent."
         return f"Booking {booking_id} already paid, nothing done."
-
-    
 
 @shared_task
 def notify_users_new_parking_lot(lot_id):
@@ -298,7 +292,6 @@ def generate_report_pdf(report_data):
     HTML(string=html_str).write_pdf(pdf_filename)
     return pdf_filename
 
-
 @shared_task
 def send_monthly_activity_report():
     with current_app.app_context():
@@ -468,7 +461,139 @@ def send_monthly_activity_report():
             except Exception:
                 pass
 
+@shared_task
+def reject_unoccupied_booking(booking_id):
+    booking = Booking.query.get(booking_id)
+    if not booking:
+        return
 
+    if booking.status == "Confirmed":
+        booking.status = "Rejected"
+        db.session.add(booking)
+
+        parking = ParkingLot.query.get(booking.parking_lot_id)
+        if parking and hasattr(parking, "occupied") and parking.occupied > 0:
+            parking.occupied -= 1  # Decrement occupied count
+            db.session.add(parking)
+
+        # Create Notification
+        notif = Notification(
+            customer_id=booking.customer_id,
+            role="user",
+            heading="Booking Rejected",
+            message=f"Your booking for {booking.parking_lot.name} was rejected because it was not occupied within 30 minutes of start time."
+        )
+        db.session.add(notif)
+
+        # Commit DB changes first
+        db.session.commit()
+
+        # Send Email to user
+        user = User.query.get(booking.customer_id)
+        if user and user.email:
+            msg = Message(
+                subject="Booking Rejected Due to No-Show",
+                recipients=[user.email],
+                body=(
+                    f"Dear {user.fname or user.username},\n\n"
+                    f"Your booking for the parking lot '{booking.parking_lot.name}' scheduled from "
+                    f"{booking.start_time.strftime('%Y-%m-%d %H:%M')} was rejected because you did not occupy the slot within 30 minutes of the start time.\n\n"
+                    "If this is a mistake or you have any questions, please contact support.\n\n"
+                    "Thank you."
+                )
+            )
+            mail.send(msg)
+
+@shared_task
+def check_overtime_bookings():
+    local_tz = ZoneInfo("Asia/Kolkata")
+    now_utc = datetime.utcnow().replace(tzinfo=ZoneInfo("UTC"))
+    now = now_utc.astimezone(local_tz)  # Current time in IST as aware datetime
+
+    print(f"[check_overtime_bookings] Current Kolkata local time: {now}")
+
+    # Debug: Print all bookings in DB
+    all_bookings = Booking.query.all()
+
+    # Filter bookings with 'occupied' status and end_time < now (aware comparison)
+    bookings = Booking.query.filter(
+        func.lower(Booking.status) == "occupied",
+        Booking.end_time < now,
+    ).all()
+
+    print(f"[check_overtime_bookings] Bookings found for overtime processing: {len(bookings)}")
+
+    for booking in bookings:
+        parking = booking.parking_lot
+        user = booking.user
+
+        if not parking or not user:
+            
+            continue
+
+        # Make booking.end_time tz-aware if naive, using IST
+        if booking.end_time.tzinfo is None:
+            end_time_aware = booking.end_time.replace(tzinfo=local_tz)
+        else:
+            end_time_aware = booking.end_time.astimezone(local_tz)
+
+        # Calculate overtime in minutes
+        overtime_minutes = (now - end_time_aware).total_seconds() // 60
+        intervals = int(overtime_minutes // 30)
+
+        if intervals < 1:
+            print(f"  Booking ID={booking.id} overtime less than 30 mins, skipping.")
+            continue
+
+        interval_charge = parking.price // 2  # price charged per 30min overtime
+        total_overtime_amount = interval_charge * intervals
+
+        # Query unpaid payment for overtime if exists
+        payment = Payments.query.filter_by(
+            booking_id=booking.id,
+            status="unpaid"
+        ).order_by(Payments.id.desc()).first()
+
+        if payment:
+            if payment.amount < total_overtime_amount:
+                payment.amount = total_overtime_amount
+                db.session.add(payment)
+                print(f"  Updated payment ID={payment.id}, new amount {payment.amount}")
+            else:
+                print(f"  Payment ID={payment.id} amount already up-to-date: {payment.amount}")
+        else:
+            # Create overtime payment record
+            payment = Payments(
+                customer_id=booking.customer_id,
+                booking_id=booking.id,
+                due_date=now.date(),
+                amount=total_overtime_amount,
+                status="unpaid"
+            )
+            db.session.add(payment)
+            print(f"  Created new payment for booking ID={booking.id}, amount {payment.amount}")
+
+        db.session.commit()
+
+        # Send email to user notifying overtime charges
+        if user.email:
+            msg = Message(
+                subject="Parking Overtime Warning",
+                recipients=[user.email],
+                body=(
+                    f"Dear {user.fname or user.username},\n\n"
+                    f"Your booking for the parking lot '{parking.name}' ended at "
+                    f"{booking.end_time.strftime('%Y-%m-%d %H:%M')} but your spot is still occupied.\n"
+                    f"You are being charged {interval_charge} currency units every 30 minutes for overtime.\n"
+                    f"Current due for overtime: {total_overtime_amount} currency units.\n\n"
+                    "Please release the spot immediately to avoid further charges.\n\n"
+                    "Thank you."
+                )
+            )
+            mail.send(msg)
+            print(f"  Sent overtime warning email to {user.email}")
+
+    print("[check_overtime_bookings] Task completed.")
 
 
 

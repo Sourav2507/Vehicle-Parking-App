@@ -2,9 +2,13 @@ from flask import Blueprint, session, redirect, url_for, render_template, jsonif
 from backend.models import *
 from backend.config.extensions import db,cache
 from sqlalchemy import func, extract,case, desc
-from backend.celery.tasks import expire_booking_if_unpaid,notify_users_new_parking_lot,generate_report_pdf
+from backend.celery.tasks import *
 from datetime import datetime
 import os
+from pytz import timezone
+
+IST = timezone('Asia/Kolkata')
+now = datetime.now(IST)
 
 admin = Blueprint('admin', __name__)
 
@@ -149,8 +153,6 @@ def add_lot():
         )
         db.session.add(new_lot)
         db.session.commit()
-
-        # Trigger Celery task in background
         notify_users_new_parking_lot.delay(new_lot.id)
 
         return jsonify(success=True, lot_id=new_lot.id)
@@ -178,9 +180,6 @@ def get_lot_bookings(lot_id):
         })
 
     return jsonify({'success': True, 'bookings': bookings_data})
-
-
-
 
 @admin.get("/admin/manage-users")
 def manage_users():
@@ -310,7 +309,7 @@ def accept_booking(booking_id):
 
         expire_booking_if_unpaid.apply_async(
         args=[booking.id, payment.id],
-        countdown=6*60*60
+        countdown=30*60
         )
         return jsonify({"success": True})
 
@@ -372,8 +371,17 @@ def confirm_booking(booking_id):
             message=f"Your booking for {lot.name} has been confirmed. Payment marked as paid by admin."
         )
         db.session.add(notif)
-
         db.session.commit()
+
+        now = datetime.utcnow()
+        target_time = booking.start_time + timedelta(minutes=45)
+        countdown = (target_time - now).total_seconds()
+
+        if countdown < 0:
+            countdown = 0
+
+        reject_unoccupied_booking.apply_async(args=[booking.id], countdown=countdown)
+
         return jsonify({"success": True})
 
 @admin.get("/admin/reports")

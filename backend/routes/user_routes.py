@@ -1,10 +1,11 @@
 from flask import Blueprint,render_template,redirect,url_for,session,jsonify,request,current_app
 from werkzeug.utils import secure_filename
 import os
+from backend.celery.tasks import reject_unoccupied_booking
 from sqlalchemy import func,extract,or_
 from backend.config.extensions import db,cache
 from backend.models import *
-from datetime import datetime, time
+from datetime import datetime, time,timedelta
 from pytz import timezone
 
 IST = timezone('Asia/Kolkata')
@@ -439,7 +440,7 @@ def payments():
 
 @user.route("/user/pay/<int:payment_id>", methods=["POST"])
 def mark_payment_paid(payment_id):
-    if ("username" in session):
+    if "username" in session:
         if "user_id" not in session:
             return jsonify({"success": False, "message": "Unauthorized"}), 401
 
@@ -465,6 +466,18 @@ def mark_payment_paid(payment_id):
                 message=f"Your payment for booking at {booking.parking_lot.name} has been confirmed. You're all set!"
             )
             db.session.add(notif)
+
+            db.session.commit()
+
+            now = datetime.utcnow()
+            target_time = booking.start_time + timedelta(minutes=45)
+            countdown = (target_time - now).total_seconds()
+            if countdown < 0:
+                countdown = 0
+
+            reject_unoccupied_booking.apply_async(args=[booking.id], countdown=countdown)
+
+            return jsonify({"success": True})
 
         db.session.commit()
         return jsonify({"success": True})
@@ -660,3 +673,5 @@ def upload_image():
             "message": "Image uploaded successfully.",
             "image_url": f"/static/images/{filename}"
         })
+
+
