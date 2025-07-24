@@ -11,7 +11,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "backend.celery.tasks.send_monthly_activity_report",
         "schedule": crontab(hour=23,minute=30)
     },
-
     
     'check-overtime-bookings-every-30-mins': {
         'task': 'backend.celery.tasks.check_overtime_bookings',

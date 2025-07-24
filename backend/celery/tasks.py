@@ -297,7 +297,7 @@ def send_monthly_activity_report():
     with current_app.app_context():
         now = datetime.utcnow()
 
-        # Only continue if today is the last day of the month 
+        # Last Month validation
         tomorrow = now + timedelta(days=1)
         if tomorrow.day != 1:
             print("Not the last day of the month, skipping monthly report generation.")
