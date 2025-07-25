@@ -6,7 +6,6 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=10, minute=00)
     },
 
-
     "send_monthly_activity_report": {
         "task": "backend.celery.tasks.send_monthly_activity_report",
         "schedule": crontab(hour=23,minute=30)
