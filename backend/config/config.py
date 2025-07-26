@@ -22,7 +22,7 @@ class LocalDevelopmentConfig(Config):
     MAIL_USE_TLS = True
     MAIL_USE_SSL = False
     MAIL_USERNAME = 'developersouravdebnath@gmail.com'
-    MAIL_PASSWORD = 'gskdzfzeithjyqfc'
+    MAIL_PASSWORD = 'Secret_not_to_be_shared'
     MAIL_DEFAULT_SENDER = 'developersouravdebnath@gmail.com'
 
     CELERY = dict(
